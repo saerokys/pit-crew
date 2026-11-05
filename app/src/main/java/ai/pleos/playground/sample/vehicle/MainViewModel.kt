@@ -16,6 +16,7 @@ import ai.pleos.playground.sample.vehicle.ui.data.AppPage
 import ai.pleos.playground.sample.vehicle.ui.data.ApiExplorerPane
 import ai.pleos.playground.sample.vehicle.ui.data.FeatureRequestFlow
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
+import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
 import ai.pleos.playground.sample.vehicle.ui.data.withFeatureResult
@@ -92,6 +93,26 @@ class MainViewModel(application: Application) :
             result.forEach { (feature, state) -> Log.i(TAG, "SC-000 capability ${feature.name}: ${state.name}") }
             _uiState.update { it.copy(featureSupport = result, startup = StartupPhase.DONE) }
         }
+    }
+
+    /** SC-200 [네, 세웠어요]: 세션을 시작하고 시작 시각을 기록한다. 이미 있으면 시각을 덮어쓰지 않는다. */
+    fun startAccidentSession() {
+        _uiState.update {
+            if (it.accidentSession != null) it
+            else it.copy(accidentSession = AccidentSession(startedAtMillis = System.currentTimeMillis()))
+        }
+    }
+
+    fun setChecked(id: String, checked: Boolean) {
+        _uiState.update { state ->
+            val session = state.accidentSession ?: return@update state
+            state.copy(accidentSession = session.withChecked(id, checked))
+        }
+    }
+
+    /** 사고 모드를 나가거나 끝냈을 때(홈 도착) 세션 데이터를 버린다. */
+    fun endAccidentSession() {
+        _uiState.update { if (it.accidentSession == null) it else it.copy(accidentSession = null) }
     }
 
     private fun ensureDomainFeatureCounts() {

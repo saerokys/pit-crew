@@ -6,6 +6,7 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiFeatureDescriptor
 import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
+import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
 
@@ -29,6 +30,8 @@ data class MainUiState(
     val explorerEvents: List<String> = emptyList(),
     val isInitialized: Boolean = false,
     val startup: StartupPhase = StartupPhase.LOADING,
+    /** 사고 모드 세션. 사고 모드 밖(홈)에서는 null. */
+    val accidentSession: AccidentSession? = null,
     val featureSupport: Map<VehicleFeature, SupportState> = emptyMap(),
     val isSubscribed: Boolean = false,
     val subscribedFeatureId: String? = null,

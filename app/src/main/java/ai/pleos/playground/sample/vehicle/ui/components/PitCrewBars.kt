@@ -115,11 +115,12 @@ fun PitCrewTopBar(
 
 /**
  * 하단 바(높이 128, bar 색): 왼쪽 [이전](기본 버튼), 오른쪽 가장 큰 [다음](채운 주요 버튼).
- * [onPrevious]가 null이면 [이전]을 그리지 않는다. 채운 버튼은 이 [다음] 하나뿐이다.
+ * [onPrevious]가 null이면 [이전]을, [onNext]가 null이면 [다음]을 그리지 않는다(선택 버튼으로만 이동하는 화면).
+ * 채운 버튼은 이 [다음] 하나뿐이다.
  */
 @Composable
 fun PitCrewBottomBar(
-    onNext: () -> Unit,
+    onNext: (() -> Unit)?,
     modifier: Modifier = Modifier,
     onPrevious: (() -> Unit)? = null,
     nextLabel: String = "다음"
@@ -141,12 +142,14 @@ fun PitCrewBottomBar(
             )
         }
         Spacer(Modifier.weight(1f))
-        PitCrewButton(
-            text = nextLabel,
-            onClick = onNext,
-            filled = true,
-            trailingIcon = PitCrewIcons.ChevronRight,
-            modifier = Modifier.width(PitCrewDimens.nextButtonWidth)
-        )
+        if (onNext != null) {
+            PitCrewButton(
+                text = nextLabel,
+                onClick = onNext,
+                filled = true,
+                trailingIcon = PitCrewIcons.ChevronRight,
+                modifier = Modifier.width(PitCrewDimens.nextButtonWidth)
+            )
+        }
     }
 }

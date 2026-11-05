@@ -1,6 +1,13 @@
 package ai.pleos.playground.sample.vehicle.ui.nav
 
+import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.ui.accident.SafetyCheckScreen
+import ai.pleos.playground.sample.vehicle.ui.accident.StopCheckScreen
+import ai.pleos.playground.sample.vehicle.ui.components.DialogButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewBottomBar
+import ai.pleos.playground.sample.vehicle.ui.components.PitCrewDialog
+import ai.pleos.playground.sample.vehicle.ui.components.PitCrewIcons
+import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
@@ -18,7 +25,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +88,10 @@ class PitCrewNavigator(start: PitCrewRoute) {
 fun PitCrewNavHost(
     startupDone: Boolean,
     summary: LinkSummary,
+    session: AccidentSession?,
+    onStartSession: () -> Unit,
+    onSetChecked: (String, Boolean) -> Unit,
+    onEndSession: () -> Unit,
     modifier: Modifier = Modifier,
     topBarTrailing: (@Composable () -> Unit)? = null
 ) {
@@ -86,17 +100,38 @@ fun PitCrewNavHost(
         if (startupDone && navigator.current == PitCrewRoute.STARTUP) navigator.replaceWithHome()
     }
     val route = navigator.current
-    // SC-000에서는 뒤로 가기를 무시한다. 그 밖에는 직전 화면으로, 홈에서는 시스템 기본(앱 종료).
+    var showExitDialog by remember { mutableStateOf(false) }
+    var showNotYetDialog by remember { mutableStateOf(false) }
+
+    // 홈에 도착하면(나가기, 아직이에요, 마치기, 이전) 사고 모드 세션 데이터를 버린다.
+    LaunchedEffect(route, session != null) {
+        if (route == PitCrewRoute.HOME && session != null) onEndSession()
+    }
+
+    // [이전]과 시스템 뒤로 가기는 같다. 세션이 있는 채로 SC-200에서 나가면 확인 대화상자를 먼저 보여 준다.
+    fun goBack() {
+        if (route == PitCrewRoute.STOP_CHECK && session != null) showExitDialog = true else navigator.pop()
+    }
+    // SC-000에서는 뒤로 가기를 무시한다. 홈에서는 시스템 기본(앱 종료).
     BackHandler(enabled = route == PitCrewRoute.STARTUP || navigator.canPop) {
-        if (route != PitCrewRoute.STARTUP) navigator.pop()
+        if (route != PitCrewRoute.STARTUP) goBack()
     }
 
     Column(modifier = modifier.fillMaxSize().background(PitCrewTheme.colors.background)) {
         val showSubtitle = route == PitCrewRoute.STARTUP || route == PitCrewRoute.HOME
+        val step = route.step
+        val trailing: (@Composable () -> Unit)? = when {
+            showSubtitle -> topBarTrailing // 개발자 도구 버튼(디버그 빌드, 홈에서만)
+            step != null && step >= 2 -> {
+                // [소리로 듣기]는 Phase 9 전까지 회색 비활성
+                { TopBarButton(text = "소리로 듣기", icon = PitCrewIcons.SpeakerOn, onClick = {}, enabled = false) }
+            }
+            else -> null
+        }
         PitCrewTopBar(
-            step = route.step,
+            step = step,
             subtitle = if (showSubtitle) "사고 직후 정차부터 마무리까지 안내" else null,
-            trailing = topBarTrailing
+            trailing = trailing
         )
         Box(modifier = Modifier.weight(1f).fillMaxSize()) {
             when (route) {
@@ -108,19 +143,72 @@ fun PitCrewNavHost(
                     onVehicleLink = { navigator.push(PitCrewRoute.VEHICLE_LINK) },
                     onSettings = { navigator.push(PitCrewRoute.SETTINGS) }
                 )
+                PitCrewRoute.STOP_CHECK -> StopCheckScreen(
+                    session = session,
+                    onStopped = {
+                        onStartSession()
+                        navigator.push(PitCrewRoute.SAFETY)
+                    },
+                    onNotYet = { showNotYetDialog = true }
+                )
+                PitCrewRoute.SAFETY -> SafetyCheckScreen(
+                    session = session,
+                    onCheckedChange = onSetChecked,
+                    onExitRequest = { showExitDialog = true }
+                )
                 else -> PlaceholderScreen(route, onHome = { navigator.replaceWithHome() })
             }
         }
         if (route.step != null) {
             PitCrewBottomBar(
-                onPrevious = { navigator.pop() },
-                onNext = {
-                    val next = navigator.next()
-                    if (next != null) navigator.push(next) else navigator.replaceWithHome()
+                onPrevious = { goBack() },
+                // SC-200은 두 선택 버튼으로만 이동한다. 그 밖의 [다음]은 체크와 관계없이 항상 눌린다.
+                onNext = if (route == PitCrewRoute.STOP_CHECK) null else {
+                    {
+                        val next = navigator.next()
+                        if (next != null) navigator.push(next) else navigator.replaceWithHome()
+                    }
                 },
                 nextLabel = if (navigator.next() == null) "마치기" else "다음"
             )
         }
+    }
+    SessionDialogs(
+        showExit = showExitDialog,
+        showNotYet = showNotYetDialog,
+        onDismissExit = { showExitDialog = false },
+        onDismissNotYet = { showNotYetDialog = false },
+        onGoHome = { navigator.replaceWithHome() }
+    )
+}
+
+@Composable
+private fun SessionDialogs(
+    showExit: Boolean,
+    showNotYet: Boolean,
+    onDismissExit: () -> Unit,
+    onDismissNotYet: () -> Unit,
+    onGoHome: () -> Unit
+) {
+    if (showExit) {
+        PitCrewDialog(
+            title = "사고 모드를 나갈까요?",
+            body = "지금까지 체크한 내용은 사라져요.",
+            note = "참고용 안내예요.",
+            buttons = listOf(
+                DialogButton("계속하기", onDismissExit),
+                DialogButton("나가기") { onDismissExit(); onGoHome() }
+            ),
+            onDismiss = onDismissExit
+        )
+    }
+    if (showNotYet) {
+        PitCrewDialog(
+            title = "먼저 안전한 곳에 차를 세워 주세요",
+            body = "이 앱은 차를 세운 뒤에 사용해 주세요",
+            buttons = listOf(DialogButton("홈으로") { onDismissNotYet(); onGoHome() }),
+            onDismiss = onDismissNotYet
+        )
     }
 }
 

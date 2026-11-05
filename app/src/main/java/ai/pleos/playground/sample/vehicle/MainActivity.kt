@@ -24,6 +24,9 @@ class MainActivity : ComponentActivity() {
                 SampleApp(
                     uiState = uiState,
                     onShowDevPage = viewModel::showDevPage,
+                    onStartSession = viewModel::startAccidentSession,
+                    onSetChecked = viewModel::setChecked,
+                    onEndSession = viewModel::endAccidentSession,
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

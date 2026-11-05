@@ -25,7 +25,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 /**
- * 체크 항목. 한 줄 전체가 터치 영역(높이 96 이상).
+ * 체크 항목. 한 줄 전체가 터치 영역(SC-210 시안: 행 높이 144, 글자 40 Bold).
  * 미체크: surface 배경, divider 테두리의 빈 체크박스.
  * 체크: accent 테두리, accent로 채운 체크박스와 체크 표시.
  */
@@ -42,11 +42,11 @@ fun CheckItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = PitCrewDimens.touchMin)
+            .heightIn(min = PitCrewDimens.checkItemMinHeight)
             .background(colors.surface, PitCrewShapes.card)
             .border(BorderStroke(PitCrewDimens.cardBorder, line), PitCrewShapes.card)
             .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
-            .padding(horizontal = 32.dp, vertical = 16.dp),
+            .padding(horizontal = 32.dp, vertical = 40.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -66,6 +66,6 @@ fun CheckItem(
             }
         }
         Spacer(Modifier.width(24.dp))
-        Text(text, style = PitCrewTheme.typography.body, color = colors.textPrimary)
+        Text(text, style = PitCrewTheme.typography.checkItem, color = colors.textPrimary)
     }
 }

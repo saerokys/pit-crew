@@ -48,6 +48,9 @@ fun SampleApp(
     onBackToFeatureList: () -> Unit,
     onDismissError: () -> Unit,
     onShowDevPage: (AppPage) -> Unit,
+    onStartSession: () -> Unit,
+    onSetChecked: (String, Boolean) -> Unit,
+    onEndSession: () -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -100,6 +103,10 @@ fun SampleApp(
                 PitCrewNavHost(
                     startupDone = uiState.startup == StartupPhase.DONE,
                     summary = summarizeLink(uiState.isInitialized, uiState.featureSupport),
+                    session = uiState.accidentSession,
+                    onStartSession = onStartSession,
+                    onSetChecked = onSetChecked,
+                    onEndSession = onEndSession,
                     // 개발자 도구 진입점: 디버그 빌드에서만 상단 바 오른쪽에 둔다(Phase 14에서 제거).
                     topBarTrailing = if (devToolsEnabled) {
                         {

@@ -33,6 +33,20 @@ object PitCrewDimens {
     val menuIconSize = 64.dp
     val homeStatusTopGap = 32.dp
     val homeHintHeight = 84.dp
+    // 사고 모드 단계 화면(SC-200, SC-210) 시안에서 읽은 값
+    val stepScreenTopGap = 40.dp
+    val stepScreenBottomGap = 32.dp
+    val stepColumnGap = 32.dp
+    val progressListWidth = 400.dp
+    val progressListPadding = 18.dp
+    val progressRowHeight = 80.dp
+    val progressRowGap = 12.dp
+    val progressCircle = 48.dp
+    val checkItemMinHeight = 144.dp
+    val infoCardWidth = 460.dp
+    val infoIconSize = 56.dp
+    val topBarButtonMinWidth = 248.dp
+    val captionRowHeight = 76.dp
 }
 
 object PitCrewShapes {

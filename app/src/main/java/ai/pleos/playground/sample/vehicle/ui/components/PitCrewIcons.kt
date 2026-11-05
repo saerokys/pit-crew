@@ -128,6 +128,38 @@ object PitCrewIcons {
         }
     }
 
+    /** 소리로 듣기 */
+    val SpeakerOn: ImageVector by lazy {
+        icon("SpeakerOn") {
+            moveTo(3.5f, 9.5f); lineTo(7.5f, 9.5f); lineTo(12f, 5.5f); lineTo(12f, 18.5f)
+            lineTo(7.5f, 14.5f); lineTo(3.5f, 14.5f); close()
+            moveTo(15.2f, 9f)
+            arcToRelative(4f, 4f, 0f, false, true, 0f, 6f)
+            moveTo(18f, 6.5f)
+            arcToRelative(8f, 8f, 0f, false, true, 0f, 11f)
+        }
+    }
+
+    /** 소리 꺼짐(비활성) */
+    val SpeakerOff: ImageVector by lazy {
+        icon("SpeakerOff") {
+            moveTo(3.5f, 9.5f); lineTo(7.5f, 9.5f); lineTo(12f, 5.5f); lineTo(12f, 18.5f)
+            lineTo(7.5f, 14.5f); lineTo(3.5f, 14.5f); close()
+            moveTo(15.5f, 9.5f); lineTo(20.5f, 14.5f)
+            moveTo(20.5f, 9.5f); lineTo(15.5f, 14.5f)
+        }
+    }
+
+    /** 아직 움직이고 있어요 */
+    val ArrowsRight: ImageVector by lazy {
+        icon("ArrowsRight") {
+            moveTo(3f, 9f); lineTo(11f, 9f)
+            moveTo(3f, 15f); lineTo(11f, 15f)
+            moveTo(3f, 12f); lineTo(19f, 12f)
+            moveTo(14f, 6f); lineTo(20f, 12f); lineTo(14f, 18f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {
