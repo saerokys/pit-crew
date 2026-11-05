@@ -18,7 +18,14 @@ internal object PublicApiPolicy {
         "Tire.unregisterTirePressure"
     )
 
+    // Pit Crew는 차량 값을 읽기만 한다(CLAUDE.md 절대 규칙 2).
+    // 이름이 아래 접두어로 시작하는 함수만 허용한다. set/move/select 등 제어 함수는 목록에서 빠진다.
+    private val readOnlyPrefixes = listOf("check", "get", "is", "register", "unregister")
+
+    fun isReadOnlyName(name: String): Boolean = readOnlyPrefixes.any { name.startsWith(it) }
+
     fun isSupported(function: KFunction<*>): Boolean {
+        if (!isReadOnlyName(function.name)) return false
         val owner = function.parameters
             .firstOrNull { it.kind == KParameter.Kind.INSTANCE }
             ?.type

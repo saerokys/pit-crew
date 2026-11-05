@@ -61,7 +61,6 @@ internal fun apiExecutionMode(
 private val TYPED_DOOR_METHODS = setOf(
     "checkDoorPositionCapabilities",
     "getCurrentDoorPosition",
-    "setDoorPosition",
     "registerDoorPosition",
     "unregisterDoorPosition"
 )

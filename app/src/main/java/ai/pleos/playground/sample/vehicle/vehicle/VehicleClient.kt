@@ -18,7 +18,6 @@ class VehicleClient(
     enum class DoorOperation {
         CAPABILITY,
         READ,
-        SET,
         REGISTER,
         UNREGISTER
     }
@@ -26,7 +25,6 @@ class VehicleClient(
     interface Callback {
         fun onCapabilities(accessType: String, ranges: Map<String, ApiNumericRange>)
         fun onDoorPositionRead(position: Int?)
-        fun onDoorPositionSet(position: Int?)
         fun onDoorPositionChanged(position: Int?)
         fun onError(exception: Exception)
         fun onDoorOperationError(operation: DoorOperation, exception: Exception) {
@@ -54,8 +52,6 @@ class VehicleClient(
     fun inspectDoorPositionCapabilities() = doorRequests.inspectDoorPositionCapabilities()
 
     fun readDoorPosition(area: String) = doorRequests.readDoorPosition(area)
-
-    fun setDoorPosition(area: String, position: Int) = doorRequests.setDoorPosition(area, position)
 
     fun startDoorPositionUpdates(area: String): Boolean = doorRequests.startDoorPositionUpdates(area)
 
@@ -117,15 +113,6 @@ internal class DoorPositionRequests(
             area = doorArea(area),
             onComplete = callback::onDoorPositionRead,
             onFailed = { callback.onDoorOperationError(DoorOperation.READ, it) }
-        )
-    }
-
-    fun setDoorPosition(area: String, position: Int) = runCall(DoorOperation.SET) {
-        door.setDoorPosition(
-            area = doorArea(area),
-            value = position,
-            onComplete = { _, value -> callback.onDoorPositionSet(value) },
-            onFailed = { callback.onDoorOperationError(DoorOperation.SET, it) }
         )
     }
 

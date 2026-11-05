@@ -63,7 +63,6 @@ class MainViewModel(application: Application) :
                     isInitialized = true
                 )
             }
-            showApiExplorer(VehicleDomain.DOOR)
         }
     }
 
@@ -90,7 +89,7 @@ class MainViewModel(application: Application) :
         val features = apiFeatures(domain, methods)
         _uiState.update {
             it.copy(
-                page = AppPage.API_EXPLORER,
+                page = AppPage.DEV_TOOLS,
                 selectedDomain = domain,
                 apiExplorerPane = ApiExplorerPane.FEATURE_LIST,
                 apiMethods = methods,
@@ -120,7 +119,7 @@ class MainViewModel(application: Application) :
         featureRequestFlow.beginEntry(featureId)
         _uiState.update {
             it.copy(
-                page = AppPage.API_EXPLORER,
+                page = AppPage.DEV_TOOLS,
                 apiExplorerPane = ApiExplorerPane.FEATURE_DASHBOARD,
                 selectedFeatureId = featureId,
                 focusedMethodId = null,
@@ -146,7 +145,7 @@ class MainViewModel(application: Application) :
         featureRequestFlow.clear()
         _uiState.update {
             it.copy(
-                page = AppPage.API_EXPLORER,
+                page = AppPage.DEV_TOOLS,
                 apiExplorerPane = ApiExplorerPane.FEATURE_LIST,
                 selectedFeatureId = null,
                 errorMessage = null,
@@ -169,16 +168,6 @@ class MainViewModel(application: Application) :
             return
         }
         invokeApi(method.id, requestValues(method, selectedValues))
-    }
-
-    fun runFeatureSet(values: Map<String, String>) {
-        val feature = selectedFeature() ?: return
-        val method = feature.write
-        if (method == null) {
-            publishFeatureError("No set API is available for ${feature.title}.")
-            return
-        }
-        invokeApi(method.id, requestValues(method, values))
     }
 
     fun startFeatureUpdates(values: Map<String, String>) {
@@ -309,20 +298,6 @@ class MainViewModel(application: Application) :
                 featureErrorMessage = null
             )
         }
-    }
-
-    override fun onDoorPositionSet(position: Int?) {
-        val methodId = activeTypedMethodId
-        val feature = methodId?.let(::featureForMethod)
-        markActiveTypedMethod(ApiMethodStatus.RESULT)
-        updateApiMethodResponse(methodId, "Door position set: ${position ?: "accepted"}")
-        _uiState.update {
-            it.copy(
-                errorMessage = null,
-                featureErrorMessage = null
-            )
-        }
-        feature?.let { completeFeatureOperation(it, ApiOperation.SET, succeeded = true) }
     }
 
     override fun onDoorPositionChanged(position: Int?) {
@@ -518,15 +493,6 @@ class MainViewModel(application: Application) :
         when (methodName) {
             "checkDoorPositionCapabilities" -> vehicleClient.inspectDoorPositionCapabilities()
             "getCurrentDoorPosition" -> vehicleClient.readDoorPosition(values.getValue("area"))
-            "setDoorPosition" -> {
-                val position = values["value"]?.toIntOrNull()
-                if (position == null) {
-                    onError(IllegalArgumentException("Door position must be an integer."))
-                    return false
-                } else {
-                    vehicleClient.setDoorPosition(values.getValue("area"), position)
-                }
-            }
             "registerDoorPosition" -> {
                 if (vehicleClient.startDoorPositionUpdates(values.getValue("area"))) {
                     markActiveTypedMethod(ApiMethodStatus.RESULT)

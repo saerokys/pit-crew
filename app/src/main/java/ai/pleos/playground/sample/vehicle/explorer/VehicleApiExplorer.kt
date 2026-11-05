@@ -163,6 +163,10 @@ class VehicleApiExplorer(
             callback.onExplorerEvent("Method metadata is unavailable: $methodId", true)
             return
         }
+        if (!PublicApiPolicy.isReadOnlyName(function.name)) {
+            callback.onExplorerEvent("Blocked (read-only app): ${function.name}", true, methodId)
+            return
+        }
 
         val capabilityRequest = if (function.name.toOperation() == ApiOperation.CAPABILITY) {
             Any().also { capabilityRequests[methodId] = it }

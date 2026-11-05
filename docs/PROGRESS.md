@@ -15,17 +15,17 @@
 
 ## 1. 현재 상태
 
-- 날짜: 2026-11-04
-- 진행 중 Phase: Phase 0 (시작 전)
-- 마지막으로 확인된 것: 프로젝트가 에뮬레이터에서 실행됨, 읽기 권한만 매니페스트에 선언, 앱 영역 크기 측정 완료
-- 다음 할 일: Phase 0 시작 — 임시 측정 코드 제거 여부 확인, 샘플 코드 격리 보고, 빌드 확인
+- 날짜: 2026-11-05
+- 진행 중 Phase: Phase 0 (코드 작업 끝, 에뮬레이터 확인 대기)
+- 마지막으로 확인된 것: `clean assembleDebug`, `compileReleaseKotlin` 성공. TEMP-WINSIZE 없음, CONTROL_* 없음, set 코드 제거. 에뮬레이터 실행은 미확인
+- 다음 할 일: 사용자가 에뮬레이터에서 앱 실행 확인 → Phase 0 완료 처리 → Phase 1
 - 막힌 것: 없음
 
 ## 2. Phase 진행표
 
 | Phase | 내용 | 화면 | 상태 | 완료일 |
 |---|---|---|---|---|
-| 0 | 개발 환경 정리, 샘플 코드 격리 | - | 시작 전 | |
+| 0 | 개발 환경 정리, 샘플 코드 격리 | - | 진행 중 (에뮬레이터 확인 대기) | |
 | 1 | 공통 틀(테마, 상단·하단 바, 배지, 화면 이동) | - | 대기 | |
 | 2 | 앱 시작과 홈 | SC-000, SC-100 | 대기 | |
 | 3 | 사고 모드 체크리스트 흐름 | SC-200, 210, 220, 221, 230, 240 | 대기 | |
@@ -57,8 +57,8 @@
 
 ## 4. 알려진 상태와 주의
 
-- 임시 측정 코드(`TEMP-WINSIZE`, MainActivity.kt의 Logcat 출력)가 아직 남아 있을 수 있다. **Phase 0에서 제거 여부를 확인한다. (미확인)**
-- 샘플 앱의 제어(set) 호출, "Apply change", 리플렉션 탐색 코드가 남아 있다. Pit Crew 화면에서는 쓰지 않는다. Phase 0에서 분리한다.
+- 임시 측정 코드(`TEMP-WINSIZE`, Logcat 출력)는 이미 없다. `app/src` 검색으로 확인했다(2026-11-05).
+- 샘플 앱의 제어(set) 호출, "Apply change", `onRunSet`은 Phase 0에서 삭제했다. 리플렉션 탐색기는 읽기 전용(`PublicApiPolicy`: check/get/is/register/unregister만 허용, `invoke`에서 한 번 더 검사)으로 남기고 디버그 빌드의 [개발자 도구]에서만 연다. 제출 전 진입점 제거는 PLAN Phase 14.
 - 에뮬레이터의 차량 값은 가상 값이다.
 
 ## 5. SDK 검증 기록 (에뮬레이터에서 직접 확인한 것만)
@@ -92,9 +92,19 @@
 | 2026-11-03 | 정차 여부는 사용자 확인(SC-200)으로 판단 | 속도·기어를 읽을 수 없음 |
 | 2026-11-03 | TTS·STT는 `Mode.ON_DEVICE`로 쓴다 | HYBRID 기본값은 앱 등록이 필요 |
 | 2026-11-04 | 시안 크기 1682×1210px, 스타일 가이드 확정(현대차 블루 + 포인트 블루, 다크 테마) | 에뮬레이터 앱 영역 측정, 현대차 CI 색상 기반 |
+| 2026-11-05 | 개발자 도구(탐색기)는 디버그 빌드에서만 노출하고 읽기 전용으로 둔다 | 제출 APK에서 차량 제어 경로가 사용자에게 닿지 않게 함. 진입점 제거는 Phase 14에서 확인 |
+| 2026-11-05 | 샘플 앱의 set 경로를 Phase 0에서 삭제한다(범위 확장 승인) | 절대 규칙 2(읽기만). 삭제: runFeatureSet, setDoorPosition, "Apply change", onRunSet. 탐색기는 get 계열만 허용 |
 | 2026-11-04 | 시안은 PNG로 `docs/design`에 두고 Compose로 새로 개발(웹 코드 사용 안 함) | Figma Make 결과물은 React |
 
 ## 8. 작업 기록 (최신이 위)
+
+### 2026-11-05 — Phase 0 샘플 코드 정리
+- 한 일: set 경로 삭제(`runFeatureSet`, `setDoorPosition`, `VehicleClient`의 set·`DoorOperation.SET`, `onDoorPositionSet`, "Apply change" 블록, `onRunSet`, `ApiFeatureDescriptor.write`). 탐색기를 읽기 전용으로 제한(SDK 2.3.2에 `setDoorLock`, `setWindowPosition`, `setHvac*`, `moveSeat*` 등이 있어 리플렉션으로 호출 가능했음). `AppPage.API_EXPLORER`를 `DEV_TOOLS`로 바꾸고 홈은 자리표시 화면, 탐색기는 `BuildConfig.DEBUG`에서만 연결. 시작 시 자동으로 탐색기를 열던 `showApiExplorer(DOOR)` 호출 제거. PLAN Phase 14와 README 구조 절 갱신.
+- 확인한 것: `./gradlew clean assembleDebug` 성공, `compileReleaseKotlin` 성공, `app/src`에 `TEMP-WINSIZE`·`setDoorPosition`·`Apply change`·`CONTROL_` 없음, 매니페스트는 읽기 권한 20개, vehicleSdk 2.3.2, `.gitignore` 정상.
+- 확인하지 못한 것: 에뮬레이터 실행(사용자 확인 대기), 탐색기에서 set 계열이 실제로 목록에서 사라졌는지 화면 확인, 릴리스 APK 실행(compile만 확인).
+- 커밋: 없음(요청 시에만).
+- 2026-11-05 추가: `has*`를 허용 목록에서 제외(에어백 등 미사용 항목 숨김). `assembleDebug` 성공, 에뮬레이터 화면 확인은 미확인.
+- 다음 할 일: 에뮬레이터 확인 후 Phase 1.
 
 ### 2026-11-04 — 문서 준비
 - 한 일: README.md, CLAUDE.md, docs/PLAN.md, docs/SPEC.md, docs/design/(README, tokens, STYLE-GUIDE.png), docs/sdk/ 4개 작성·배치

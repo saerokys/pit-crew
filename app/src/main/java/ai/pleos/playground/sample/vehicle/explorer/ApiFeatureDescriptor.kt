@@ -8,7 +8,6 @@ data class ApiFeatureDescriptor(
     val methods: List<ApiMethodDescriptor>,
     val capability: ApiMethodDescriptor?,
     val read: ApiMethodDescriptor?,
-    val write: ApiMethodDescriptor?,
     val register: ApiMethodDescriptor?,
     val unregister: ApiMethodDescriptor?
 ) {
@@ -39,7 +38,6 @@ fun apiFeatures(domain: VehicleDomain, methods: List<ApiMethodDescriptor>): List
                 capability = groupedMethods.firstOrNull { it.operation == ApiOperation.CAPABILITY },
                 read = groupedMethods.firstOrNull { it.operation == ApiOperation.GET }
                     ?: groupedMethods.firstOrNull { it.operation == ApiOperation.OTHER },
-                write = groupedMethods.firstOrNull { it.operation == ApiOperation.SET },
                 register = groupedMethods.firstOrNull { it.operation == ApiOperation.REGISTER },
                 unregister = groupedMethods.firstOrNull { it.operation == ApiOperation.UNREGISTER }
             )

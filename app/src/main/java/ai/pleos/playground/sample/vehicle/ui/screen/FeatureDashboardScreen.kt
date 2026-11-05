@@ -40,7 +40,6 @@ fun FeatureDashboardScreen(
     uiState: MainUiState,
     onRunCapability: () -> Unit,
     onRunRead: (Map<String, String>) -> Unit,
-    onRunSet: (Map<String, String>) -> Unit,
     onStartUpdates: (Map<String, String>) -> Unit,
     onStopUpdates: (Map<String, String>) -> Unit,
     onBackToFeatureList: () -> Unit,
@@ -122,12 +121,9 @@ fun FeatureDashboardScreen(
                             capabilityStatus = capabilityStatus,
                             busy = busy,
                             readValues = values,
-                            writeValues = values,
                             onReadValueChanged = { name, value -> values[name] = value },
-                            onWriteValueChanged = { name, value -> values[name] = value },
                             onRunCapability = onRunCapability,
                             onRunRead = { onRunRead(values.toMap()) },
-                            onRunSet = { onRunSet(values.toMap()) },
                             onStartUpdates = {
                                 feature.register?.let { onStartUpdates(requestValues(it, values)) }
                             },

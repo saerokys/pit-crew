@@ -3,7 +3,6 @@ package ai.pleos.playground.sample.vehicle.ui.screen
 import ai.pleos.playground.sample.vehicle.explorer.ApiFeatureDescriptor
 import ai.pleos.playground.sample.vehicle.explorer.ApiMethodStatus
 import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
-import ai.pleos.playground.sample.vehicle.explorer.ApiParameterKind
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,12 +30,9 @@ internal fun FeatureControlPane(
     capabilityStatus: ApiMethodStatus,
     busy: Boolean,
     readValues: Map<String, String>,
-    writeValues: Map<String, String>,
     onReadValueChanged: (String, String) -> Unit,
-    onWriteValueChanged: (String, String) -> Unit,
     onRunCapability: () -> Unit,
     onRunRead: () -> Unit,
-    onRunSet: () -> Unit,
     onStartUpdates: () -> Unit,
     onStopUpdates: () -> Unit,
     scrollable: Boolean,
@@ -48,10 +44,7 @@ internal fun FeatureControlPane(
         modifier
     }
     val ranges = uiState.featureValueRanges[feature.id].orEmpty()
-    val writeRange = selectedEditorRange(feature.write?.parameters.orEmpty(), writeValues, ranges)
-    val supportRange = if (feature.write != null) writeRange else {
-        selectedEditorRange(feature.read?.parameters.orEmpty(), readValues, ranges)
-    }
+    val supportRange = selectedEditorRange(feature.read?.parameters.orEmpty(), readValues, ranges)
     Column(
         modifier = contentModifier,
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -72,39 +65,6 @@ internal fun FeatureControlPane(
             onValueChanged = onReadValueChanged,
             onRefresh = onRunRead
         )
-        feature.write?.let { method ->
-            ControlSection(title = "Change value") {
-                method.parameters.filterNot { parameter ->
-                    parameter.kind == ApiParameterKind.AREA && feature.read?.parameters?.any {
-                        it.kind == ApiParameterKind.AREA && it.name == parameter.name
-                    } == true
-                }.forEach { parameter ->
-                    ApiParameterEditor(
-                        parameter = parameter,
-                        value = writeValues[parameter.name].orEmpty(),
-                        enabled = !busy,
-                        range = writeRange,
-                        featureId = feature.id,
-                        onValueChanged = { onWriteValueChanged(parameter.name, it) }
-                    )
-                }
-                Button(
-                    onClick = onRunSet,
-                    enabled = !busy && method.parameters.all {
-                        isParameterInputValid(it, writeValues[it.name].orEmpty(), writeRange)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Apply change")
-                }
-                Text(
-                    text = "Apply sends only the change request. Use Refresh when you want to " +
-                        "read the current value.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
         if (feature.hasLiveUpdates) {
             LiveUpdatesSection(
                 feature = feature,
