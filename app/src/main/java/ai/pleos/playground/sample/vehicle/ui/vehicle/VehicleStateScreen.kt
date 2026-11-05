@@ -12,6 +12,7 @@ import ai.pleos.playground.sample.vehicle.ui.components.StatusCard
 import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewDimens
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewTheme
+import ai.pleos.playground.sample.vehicle.vehicle.AreaNames
 import ai.pleos.playground.sample.vehicle.vehicle.Reading
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
@@ -40,16 +41,7 @@ import java.text.NumberFormat
 /** 카드 하나에 보여 줄 내용. [badge]가 null이면 배지를 두지 않는다(값만 표시). */
 private data class CardInfo(val value: String, val badge: BadgeStatus? = null, val isMessage: Boolean = false)
 
-private val DoorNames = mapOf(
-    DoorValue.ROW_1_LEFT to "앞 왼쪽 문",
-    DoorValue.ROW_1_RIGHT to "앞 오른쪽 문",
-    DoorValue.ROW_2_LEFT to "뒤 왼쪽 문",
-    DoorValue.ROW_2_RIGHT to "뒤 오른쪽 문",
-    DoorValue.ROW_3_LEFT to "3열 왼쪽 문",
-    DoorValue.ROW_3_RIGHT to "3열 오른쪽 문",
-    DoorValue.HOOD to "앞쪽 덮개",
-    DoorValue.REAR to "뒤쪽"
-)
+private val DoorNames = AreaNames.door
 
 /** 문과 창문의 열림 기준: 0이면 닫힘, 0보다 크면 열림(정도는 보여 주지 않는다). */
 private fun isOpen(position: Int?): Boolean = (position ?: 0) > 0
@@ -81,7 +73,7 @@ private fun <T> valueInfo(reading: Reading<T>, format: (T) -> String): CardInfo 
     return if (reading.state == SupportState.READABLE && value != null) CardInfo(format(value)) else messageFor(reading.state)
 }
 
-private fun formatNumber(value: Float): String =
+internal fun formatNumber(value: Float): String =
     NumberFormat.getInstance().apply { maximumFractionDigits = 1 }.format(value)
 
 private fun turnSignalText(value: TurnSignalValue): String = when (value) {

@@ -16,6 +16,7 @@ import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
+import ai.pleos.playground.sample.vehicle.ui.summary.SummaryScreen
 import ai.pleos.playground.sample.vehicle.ui.vehicle.VehicleStateScreen
 import ai.pleos.playground.sample.vehicle.ui.home.LinkSummary
 import ai.pleos.playground.sample.vehicle.ui.home.StartupScreen
@@ -26,6 +27,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
@@ -54,6 +56,7 @@ enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?)
     OTHER_PARTY("SC-240", "상대방 정보 확인", 5),
     VEHICLE_STATE("SC-250", "차량 상태 기록", 6),
     SUMMARY("SC-260", "접수 요약", 7),
+    ENDING("SC-270", "종료와 기록 처리", null),
     PRE_DEPARTURE("SC-300", "출발 전 점검", null),
     VEHICLE_LINK("SC-400", "차량 연동 상태", null),
     SETTINGS("SC-500", "설정·정보", null)
@@ -67,7 +70,8 @@ private val AccidentFlow = listOf(
     PitCrewRoute.RECORD,
     PitCrewRoute.OTHER_PARTY,
     PitCrewRoute.VEHICLE_STATE,
-    PitCrewRoute.SUMMARY
+    PitCrewRoute.SUMMARY,
+    PitCrewRoute.ENDING
 )
 
 /** 경로 스택. push로 들어가고 pop으로 직전 화면에 돌아간다. */
@@ -198,12 +202,18 @@ fun PitCrewNavHost(
                     isReading = isReadingVehicle,
                     onReread = onReadVehicle
                 )
+                PitCrewRoute.SUMMARY -> SummaryScreen(session = session)
                 PitCrewRoute.OTHER_PARTY -> OtherPartyScreen(
                     session = session,
                     onCheckedChange = onSetChecked,
                     onExitRequest = { showExitDialog = true }
                 )
-                else -> PlaceholderScreen(route, onHome = { navigator.replaceWithHome() })
+                else -> PlaceholderScreen(
+                    route,
+                    onHome = { navigator.replaceWithHome() },
+                    // SC-270 자리표시에서만 [이전]을 둔다(Phase 10에서 실제 화면으로 바꾼다).
+                    onBack = if (route == PitCrewRoute.ENDING) ({ navigator.pop() }) else null
+                )
             }
         }
         if (route.step != null) {
@@ -269,7 +279,7 @@ private fun SessionDialogs(
 
 /** 실제 화면이 아직 없는 route의 자리표시 화면. 흐름 밖 화면은 [홈으로]로 돌아간다. */
 @Composable
-private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit) {
+private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit, onBack: (() -> Unit)? = null) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -286,7 +296,12 @@ private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit) {
                 color = PitCrewTheme.colors.textSecondary
             )
             if (route.step == null) {
-                PitCrewButton(text = "홈으로", onClick = onHome, modifier = Modifier.width(PitCrewDimens.prevButtonWidth))
+                Row(horizontalArrangement = Arrangement.spacedBy(PitCrewDimens.touchGap)) {
+                    if (onBack != null) {
+                        PitCrewButton(text = "이전", onClick = onBack, modifier = Modifier.width(PitCrewDimens.prevButtonWidth))
+                    }
+                    PitCrewButton(text = "홈으로", onClick = onHome, modifier = Modifier.width(PitCrewDimens.prevButtonWidth))
+                }
             }
         }
     }

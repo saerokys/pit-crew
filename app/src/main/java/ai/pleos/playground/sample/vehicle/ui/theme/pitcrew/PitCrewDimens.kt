@@ -55,6 +55,9 @@ object PitCrewDimens {
     val emergencyCardWidth = 640.dp
     // SC-250 시안에서 읽은 값
     val carPanelWidth = 480.dp
+    // SC-260 시안에서 읽은 값
+    val numberCircle = 64.dp
+    val summaryChecklistWidth = 560.dp // 시안은 한 줄 카드였고 2열 구성으로 바꿔 정한 값
 }
 
 object PitCrewShapes {

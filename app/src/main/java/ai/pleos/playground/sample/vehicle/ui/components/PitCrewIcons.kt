@@ -317,6 +317,14 @@ object PitCrewIcons {
         }
     }
 
+    /** 확인 안 함 */
+    val MinusCircle: ImageVector by lazy {
+        icon("MinusCircle") {
+            circle(12f, 12f, 9.5f)
+            moveTo(8f, 12f); lineTo(16f, 12f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {
