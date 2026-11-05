@@ -1,6 +1,5 @@
 package ai.pleos.playground.sample.vehicle
 
-import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.ui.screen.SampleApp
 import ai.pleos.playground.sample.vehicle.ui.theme.VehicleSampleAppTheme
 import android.os.Bundle
@@ -24,7 +23,7 @@ class MainActivity : ComponentActivity() {
             VehicleSampleAppTheme {
                 SampleApp(
                     uiState = uiState,
-                    onOpenDevTools = { viewModel.showApiExplorer(VehicleDomain.DOOR) },
+                    onShowDevPage = viewModel::showDevPage,
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

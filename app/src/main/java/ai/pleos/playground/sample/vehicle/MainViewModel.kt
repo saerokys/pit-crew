@@ -66,6 +66,11 @@ class MainViewModel(application: Application) :
         }
     }
 
+    /** 디버그 전용 개발자 도구 페이지로 이동한다(릴리스에서는 SampleApp이 막는다). */
+    fun showDevPage(page: AppPage) {
+        _uiState.update { it.copy(page = page, errorMessage = null, featureErrorMessage = null) }
+    }
+
     fun showHome() {
         _uiState.update {
             it.copy(

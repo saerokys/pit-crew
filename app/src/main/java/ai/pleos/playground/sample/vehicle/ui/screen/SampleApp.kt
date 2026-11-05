@@ -7,6 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import ai.pleos.playground.sample.vehicle.ui.data.AppPage
+import ai.pleos.playground.sample.vehicle.ui.nav.PitCrewNavHost
+import ai.pleos.playground.sample.vehicle.ui.screen.dev.ComponentGalleryScreen
+import ai.pleos.playground.sample.vehicle.ui.screen.dev.DevMenuScreen
+import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +45,7 @@ fun SampleApp(
     onStopUpdates: (Map<String, String>) -> Unit,
     onBackToFeatureList: () -> Unit,
     onDismissError: () -> Unit,
-    onOpenDevTools: () -> Unit,
+    onShowDevPage: (AppPage) -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -54,13 +62,17 @@ fun SampleApp(
         }
     }
 
-    // 개발자 도구(읽기 전용 탐색기)는 디버그 빌드에서만 열린다. 릴리스 빌드에는 진입 경로가 없다.
+    // 개발자 도구(읽기 전용 탐색기, 컴포넌트 미리보기, 화면 이동 틀)는 디버그 빌드에서만 열린다.
+    // 릴리스 빌드에는 진입 경로가 없다. 진입점은 Phase 14에서 제거한다.
     val devToolsEnabled = BuildConfig.DEBUG
-    BackHandler(enabled = uiState.page == AppPage.DEV_TOOLS) { onShowHome() }
+    val page = if (devToolsEnabled) uiState.page else AppPage.HOME
+    BackHandler(enabled = page != AppPage.HOME) {
+        onShowDevPage(if (page == AppPage.DEV_MENU) AppPage.HOME else AppPage.DEV_MENU)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            uiState.page == AppPage.DEV_TOOLS && devToolsEnabled -> ApiCatalogScreen(
+        when (page) {
+            AppPage.DEV_TOOLS -> ApiCatalogScreen(
                 uiState = uiState,
                 onSelectDomain = onOpenDomain,
                 onSelectFeature = onSelectFeature,
@@ -72,9 +84,23 @@ fun SampleApp(
                 onBackToFeatureList = onBackToFeatureList,
                 onDismissFeatureError = onDismissError
             )
-            else -> HomePlaceholder(
+            AppPage.DEV_MENU -> PitCrewFrame {
+                DevMenuScreen(
+                    onOpenApiExplorer = { onOpenDomain(VehicleDomain.DOOR) },
+                    onOpenComponents = { onShowDevPage(AppPage.DEV_COMPONENTS) },
+                    onOpenFlow = { onShowDevPage(AppPage.DEV_FLOW) },
+                    onBackHome = onShowHome
+                )
+            }
+            AppPage.DEV_COMPONENTS -> PitCrewFrame {
+                ComponentGalleryScreen(onBack = { onShowDevPage(AppPage.DEV_MENU) })
+            }
+            AppPage.DEV_FLOW -> PitCrewFrame {
+                PitCrewNavHost(onExit = { onShowDevPage(AppPage.DEV_MENU) })
+            }
+            AppPage.HOME -> HomePlaceholder(
                 showDevTools = devToolsEnabled,
-                onOpenDevTools = onOpenDevTools
+                onOpenDevTools = { onShowDevPage(AppPage.DEV_MENU) }
             )
         }
 
@@ -102,5 +128,19 @@ private fun HomePlaceholder(showDevTools: Boolean, onOpenDevTools: () -> Unit) {
                 Text("개발자 도구 (디버그 전용)")
             }
         }
+    }
+}
+
+/** Pit Crew 화면을 새 테마로 감싸고, 샘플 앱과 같은 방식으로 왼쪽 시스템 레일 영역을 비운다(에뮬레이터에서 확인 필요). */
+@Composable
+private fun PitCrewFrame(content: @Composable () -> Unit) {
+    PitCrewTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PitCrewTheme.colors.background)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Start))
+                .padding(start = AaosSystemRailInset)
+        ) { content() }
     }
 }

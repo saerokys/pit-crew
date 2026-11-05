@@ -69,7 +69,10 @@ data class RuntimeVersions(
 
 enum class AppPage {
     HOME,
-    DEV_TOOLS
+    DEV_MENU,
+    DEV_TOOLS,
+    DEV_COMPONENTS,
+    DEV_FLOW
 }
 
 enum class ApiExplorerPane {

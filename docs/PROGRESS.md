@@ -16,9 +16,9 @@
 ## 1. 현재 상태
 
 - 날짜: 2026-11-05
-- 진행 중 Phase: Phase 0 (코드 작업 끝, 에뮬레이터 확인 대기)
-- 마지막으로 확인된 것: `clean assembleDebug`, `compileReleaseKotlin` 성공. TEMP-WINSIZE 없음, CONTROL_* 없음, set 코드 제거. 에뮬레이터 실행은 미확인
-- 다음 할 일: 사용자가 에뮬레이터에서 앱 실행 확인 → Phase 0 완료 처리 → Phase 1
+- 진행 중 Phase: Phase 1 (코드 작업 끝, 에뮬레이터 확인 대기). Phase 0은 에뮬레이터 확인 후 완료 처리
+- 마지막으로 확인된 것: Phase 1 `clean assembleDebug`, `compileReleaseKotlin` 성공. 에뮬레이터 화면 확인은 미확인
+- 다음 할 일: 사용자가 에뮬레이터에서 컴포넌트 미리보기·화면 이동 틀 확인 → Phase 1 완료 처리 → Phase 2
 - 막힌 것: 없음
 
 ## 2. Phase 진행표
@@ -26,7 +26,7 @@
 | Phase | 내용 | 화면 | 상태 | 완료일 |
 |---|---|---|---|---|
 | 0 | 개발 환경 정리, 샘플 코드 격리 | - | 진행 중 (에뮬레이터 확인 대기) | |
-| 1 | 공통 틀(테마, 상단·하단 바, 배지, 화면 이동) | - | 대기 | |
+| 1 | 공통 틀(테마, 상단·하단 바, 배지, 화면 이동) | - | 진행 중 (에뮬레이터 확인 대기) | |
 | 2 | 앱 시작과 홈 | SC-000, SC-100 | 대기 | |
 | 3 | 사고 모드 체크리스트 흐름 | SC-200, 210, 220, 221, 230, 240 | 대기 | |
 | 4 | 차량 상태 읽기와 기록 | SC-250 | 대기 | |
@@ -92,11 +92,20 @@
 | 2026-11-03 | 정차 여부는 사용자 확인(SC-200)으로 판단 | 속도·기어를 읽을 수 없음 |
 | 2026-11-03 | TTS·STT는 `Mode.ON_DEVICE`로 쓴다 | HYBRID 기본값은 앱 등록이 필요 |
 | 2026-11-04 | 시안 크기 1682×1210px, 스타일 가이드 확정(현대차 블루 + 포인트 블루, 다크 테마) | 에뮬레이터 앱 영역 측정, 현대차 CI 색상 기반 |
+| 2026-11-05 | tokens.md TODO 확정: 버튼 글자 36 Bold, 배지 글자 28 Bold, 줄 높이 본문 45·caption 40, 카드 테두리 2, 하단 바 128 | 실제 화면 시안(SC-100, SC-210)에서 읽음 |
+| 2026-11-05 | 상단 바 128, 체크박스 64, 카드 안쪽 여백 32로 한다(STYLE-GUIDE는 96, 48, 약 22~24) | 실제 화면 시안이 STYLE-GUIDE와 달라 화면 시안을 따름. 예외는 tokens.md에 기록 |
+| 2026-11-05 | 기존 샘플 테마는 개발자 도구용으로 분리 유지, 새 테마는 `ui/theme/pitcrew/`에만 적용, 정리는 Phase 14. 아이콘은 직접 그린 ImageVector(의존성 추가 없음). 스위치·진행 목록은 필요한 Phase에서 만든다 | 탐색기가 기존 밝은 테마에 맞춰져 있음 |
 | 2026-11-05 | 개발자 도구(탐색기)는 디버그 빌드에서만 노출하고 읽기 전용으로 둔다 | 제출 APK에서 차량 제어 경로가 사용자에게 닿지 않게 함. 진입점 제거는 Phase 14에서 확인 |
 | 2026-11-05 | 샘플 앱의 set 경로를 Phase 0에서 삭제한다(범위 확장 승인) | 절대 규칙 2(읽기만). 삭제: runFeatureSet, setDoorPosition, "Apply change", onRunSet. 탐색기는 get 계열만 허용 |
 | 2026-11-04 | 시안은 PNG로 `docs/design`에 두고 Compose로 새로 개발(웹 코드 사용 안 함) | Figma Make 결과물은 React |
 
 ## 8. 작업 기록 (최신이 위)
+
+### 2026-11-05 — Phase 1 공통 틀
+- 한 일: tokens.md TODO 확정과 예외 기록. 새 테마 `ui/theme/pitcrew/`(색 17개, 글자, 크기·모양, `PitCrewTheme`), 공통 컴포넌트 `ui/components/`(상단 바, 단계 막대 7칸, 하단 바, `PitCrewButton`(5상태·채운 버튼), `CheckItem`, `PitCrewCard`(실선·점선), `StatusBadge`, 직접 그린 `PitCrewIcons`, `DashedBorder`), 화면 이동 틀 `ui/nav/PitCrewNav.kt`(`PitCrewRoute`, `PitCrewNavigator`, `PitCrewNavHost`, 자리표시 화면). 디버그 전용 `DEV_MENU`·`DEV_COMPONENTS`·`DEV_FLOW`와 `DevScreens.kt` 추가. 기존 샘플 테마와 탐색기는 그대로.
+- 확인한 것: `clean assembleDebug`, `compileReleaseKotlin` 성공. 코드에 hex 직접 사용 없음(`PitCrewColors.kt`와 기존 `Color.kt` 제외), 새 코드에 28sp 미만 글자 없음, `filled = true`는 하단 바 [다음] 한 곳뿐.
+- 확인하지 못한 것: 에뮬레이터 화면(크기, 대비, 왼쪽 시스템 레일 여백, 아이콘 모양, 눌림·포커스 상태). 체크박스 모서리 12, 하단 바 [이전] 320/[다음] 640 너비는 tokens.md에 없는 값이라 시안에서 눈으로 읽었다.
+- 다음 할 일: 에뮬레이터 확인 후 Phase 2(SC-000, SC-100).
 
 ### 2026-11-05 — Phase 0 샘플 코드 정리
 - 한 일: set 경로 삭제(`runFeatureSet`, `setDoorPosition`, `VehicleClient`의 set·`DoorOperation.SET`, `onDoorPositionSet`, "Apply change" 블록, `onRunSet`, `ApiFeatureDescriptor.write`). 탐색기를 읽기 전용으로 제한(SDK 2.3.2에 `setDoorLock`, `setWindowPosition`, `setHvac*`, `moveSeat*` 등이 있어 리플렉션으로 호출 가능했음). `AppPage.API_EXPLORER`를 `DEV_TOOLS`로 바꾸고 홈은 자리표시 화면, 탐색기는 `BuildConfig.DEBUG`에서만 연결. 시작 시 자동으로 탐색기를 열던 `showApiExplorer(DOOR)` 호출 제거. PLAN Phase 14와 README 구조 절 갱신.
