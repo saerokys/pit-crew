@@ -15,6 +15,9 @@ import ai.pleos.playground.sample.vehicle.ui.components.PitCrewIcons
 import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
+import ai.pleos.playground.sample.vehicle.settings.Consent
+import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
+import ai.pleos.playground.sample.vehicle.ui.consent.ConsentScreen
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
 import ai.pleos.playground.sample.vehicle.ui.precheck.PreDepartureScreen
 import ai.pleos.playground.sample.vehicle.ui.status.LinkStatusScreen
@@ -53,6 +56,7 @@ import androidx.compose.ui.Modifier
 enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?) {
     STARTUP("SC-000", "앱 시작", null),
     HOME("SC-100", "홈", null),
+    CONSENT("SC-205", "권한·동의", null),
     STOP_CHECK("SC-200", "정차 확인", 1),
     SAFETY("SC-210", "안전 확보", 2),
     INJURY("SC-220", "부상 확인", 3),
@@ -85,6 +89,8 @@ class PitCrewNavigator(start: PitCrewRoute) {
     val current: PitCrewRoute get() = stack.last()
     val canPop: Boolean get() = stack.size > 1
     fun push(route: PitCrewRoute) { stack.add(route) }
+    /** 맨 위 화면을 [route]로 바꾼다(SC-205에서 SC-200으로 갈 때 뒤로 가기에 SC-205가 남지 않게). */
+    fun replaceTop(route: PitCrewRoute) { stack[stack.lastIndex] = route }
     fun pop(): Boolean = if (canPop) { stack.removeAt(stack.lastIndex); true } else false
     /** 시작 화면(SC-000)을 홈으로 바꾼다. 홈에서 뒤로 가도 SC-000으로 돌아오지 않는다. */
     fun replaceWithHome() { stack.clear(); stack.add(PitCrewRoute.HOME) }
@@ -113,6 +119,9 @@ fun PitCrewNavHost(
     preCheckSnapshot: VehicleSnapshot?,
     isPreChecking: Boolean,
     onCheckPreDeparture: () -> Unit,
+    consent: Consent,
+    locationSupported: Boolean,
+    onConfirmConsent: (location: Boolean, voice: Boolean, network: Boolean) -> Unit,
     featureSupport: Map<VehicleFeature, SupportState>,
     linkCheckedAtMillis: Long?,
     isCheckingLink: Boolean,
@@ -127,6 +136,7 @@ fun PitCrewNavHost(
     val route = navigator.current
     var showExitDialog by remember { mutableStateOf(false) }
     var showNotYetDialog by remember { mutableStateOf(false) }
+    var consentChoice by remember { mutableStateOf(ConsentChoice(false, false, false)) }
 
     // 홈에 도착하면(나가기, 아직이에요, 마치기, 이전) 사고 모드 세션 데이터를 버린다.
     LaunchedEffect(route, session != null) {
@@ -160,7 +170,7 @@ fun PitCrewNavHost(
         val step = route.step
         val trailing: (@Composable () -> Unit)? = when {
             showSubtitle -> topBarTrailing // 개발자 도구 버튼(디버그 빌드, 홈에서만)
-            step != null && step >= 2 || route == PitCrewRoute.PRE_DEPARTURE -> {
+            step != null && step >= 2 || route == PitCrewRoute.PRE_DEPARTURE || route == PitCrewRoute.CONSENT -> {
                 // [소리로 듣기]는 Phase 9 전까지 회색 비활성
                 { TopBarButton(text = "소리로 듣기", icon = PitCrewIcons.SpeakerOn, onClick = {}, enabled = false) }
             }
@@ -176,13 +186,24 @@ fun PitCrewNavHost(
                 PitCrewRoute.STARTUP -> StartupScreen()
                 PitCrewRoute.HOME -> HomeScreen(
                     summary = summary,
-                    onAccident = { navigator.push(PitCrewRoute.STOP_CHECK) },
+                    // 사고 모드 첫 진입에서만 SC-205를 보여 주고, 이미 정했으면 바로 SC-200으로 간다.
+                    onAccident = {
+                        if (consent.decided) navigator.push(PitCrewRoute.STOP_CHECK) else {
+                            consentChoice = ConsentChoice(false, false, false)
+                            navigator.push(PitCrewRoute.CONSENT)
+                        }
+                    },
                     onPreDeparture = { navigator.push(PitCrewRoute.PRE_DEPARTURE) },
                     onVehicleLink = { navigator.push(PitCrewRoute.VEHICLE_LINK) },
                     onSettings = { navigator.push(PitCrewRoute.SETTINGS) }
                 )
+                PitCrewRoute.CONSENT -> ConsentScreen(
+                    locationSupported = locationSupported,
+                    onChoiceChange = { consentChoice = it }
+                )
                 PitCrewRoute.STOP_CHECK -> StopCheckScreen(
                     session = session,
+                    consentLine = consent.summaryLine(),
                     onStopped = {
                         onStartSession()
                         navigator.push(PitCrewRoute.SAFETY)
@@ -250,6 +271,15 @@ fun PitCrewNavHost(
                 nextIcon = PitCrewIcons.Refresh,
                 nextWidth = PitCrewDimens.recheckButtonWidth,
                 nextEnabled = !busy
+            )
+        } else if (route == PitCrewRoute.CONSENT) {
+            // [이전]은 저장하지 않고 홈으로, [다음]은 3개 값을 저장하고 SC-200으로(SC-205는 스택에서 뺀다)
+            PitCrewBottomBar(
+                onPrevious = { navigator.pop() },
+                onNext = {
+                    onConfirmConsent(consentChoice.location, consentChoice.voice, consentChoice.network)
+                    navigator.replaceTop(PitCrewRoute.STOP_CHECK)
+                }
             )
         } else if (route.step != null) {
             PitCrewBottomBar(

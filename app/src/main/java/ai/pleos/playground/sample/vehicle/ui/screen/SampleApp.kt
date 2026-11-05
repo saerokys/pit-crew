@@ -56,6 +56,8 @@ fun SampleApp(
     onReadVehicle: () -> Unit,
     onCheckPreDeparture: () -> Unit,
     onRecheckLink: () -> Unit,
+    onConfirmConsent: (Boolean, Boolean, Boolean) -> Unit,
+    onResetConsent: () -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -98,6 +100,7 @@ fun SampleApp(
                 DevMenuScreen(
                     onOpenApiExplorer = { onOpenDomain(VehicleDomain.DOOR) },
                     onOpenComponents = { onShowDevPage(AppPage.DEV_COMPONENTS) },
+                    onResetConsent = onResetConsent,
                     onBackHome = onShowHome
                 )
             }
@@ -118,6 +121,9 @@ fun SampleApp(
                     preCheckSnapshot = uiState.preCheckSnapshot,
                     isPreChecking = uiState.isPreChecking,
                     onCheckPreDeparture = onCheckPreDeparture,
+                    consent = uiState.consent,
+                    locationSupported = uiState.locationSupported,
+                    onConfirmConsent = onConfirmConsent,
                     featureSupport = uiState.featureSupport,
                     linkCheckedAtMillis = uiState.linkCheckedAtMillis,
                     isCheckingLink = uiState.isCheckingLink,

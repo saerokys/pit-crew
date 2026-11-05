@@ -10,6 +10,8 @@ import ai.pleos.playground.sample.vehicle.ui.components.PitCrewIcons
 import ai.pleos.playground.sample.vehicle.ui.components.StatusBadge
 import ai.pleos.playground.sample.vehicle.ui.components.StatusCard
 import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
+import ai.pleos.playground.sample.vehicle.ui.summary.LocationUi
+import ai.pleos.playground.sample.vehicle.ui.summary.locationUi
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewDimens
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewTheme
 import ai.pleos.playground.sample.vehicle.vehicle.AreaNames
@@ -201,6 +203,23 @@ fun VehicleStateScreen(
                     InfoStatusCard(PitCrewIcons.Gauge, "주행 거리", odometer, Modifier.weight(1f).fillMaxHeight())
                 }
                 InfoStatusCard(PitCrewIcons.TurnSignal, "방향지시등", turn, Modifier.weight(1f).fillMaxWidth())
+                // 위치를 허용한 경우에만 보이는 점선 카드(좌표와 주소는 보이지 않고 상태만, 주소는 Phase 8)
+                locationUi(session)?.let { ui ->
+                    val info = when (ui) {
+                        LocationUi.PENDING -> CardInfo("위치 확인 중이에요", isMessage = true)
+                        LocationUi.OK -> CardInfo("위치 확인됨", isMessage = true)
+                        LocationUi.UNAVAILABLE -> CardInfo("위치를 확인하지 못했어요", BadgeStatus.UNKNOWN, isMessage = true)
+                    }
+                    StatusCard(
+                        icon = PitCrewIcons.Pin,
+                        label = "사고 위치(주소)",
+                        value = info.value,
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        badge = info.badge,
+                        isMessage = true,
+                        dashed = true
+                    )
+                }
             }
         }
     }

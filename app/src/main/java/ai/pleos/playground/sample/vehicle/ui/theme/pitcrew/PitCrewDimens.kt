@@ -63,6 +63,11 @@ object PitCrewDimens {
     val statusRowHeight = 121.dp   // SC-400 행 높이(약 121)
     val homeButtonWidth = 400.dp   // SC-300 하단 바 [홈으로]
     val recheckButtonWidth = 520.dp // SC-300 하단 바 [다시 확인]
+    // SC-205 시안에서 읽은 값
+    val consentRowHeight = 134.dp
+    val switchWidth = 136.dp
+    val switchHeight = 76.dp
+    val switchKnob = 60.dp
 }
 
 object PitCrewShapes {

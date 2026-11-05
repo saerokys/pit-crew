@@ -7,6 +7,7 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.vehicle.CapabilityAreas
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
@@ -38,6 +39,10 @@ data class MainUiState(
     /** capability 응답에서 확인된 영역(문, 창문). SC-250이 이 영역만 읽는다. */
     val capabilityAreas: CapabilityAreas = CapabilityAreas(),
     val isReadingVehicle: Boolean = false,
+    /** SC-205 동의 상태(앱을 껐다 켜도 유지, 값은 스위치 3개뿐). */
+    val consent: Consent = Consent(),
+    /** 이 차량에 위치 서비스가 있는지(isSupported). 없으면 SC-205 위치 스위치가 회색이다. */
+    val locationSupported: Boolean = false,
     /** SC-300 출발 전 점검에서 읽은 값(메모리에만 보관, 사고 모드 세션과 무관). 화면에 들어올 때마다 지우고 새로 읽는다. */
     val preCheckSnapshot: VehicleSnapshot? = null,
     val isPreChecking: Boolean = false,

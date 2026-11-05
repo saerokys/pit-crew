@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StopCheckScreen(
     session: AccidentSession?,
+    consentLine: String,
     onStopped: () -> Unit,
     onNotYet: () -> Unit,
     modifier: Modifier = Modifier
@@ -119,13 +120,12 @@ fun StopCheckScreen(
             modifier = Modifier.fillMaxWidth().height(PitCrewDimens.captionRowHeight),
             contentAlignment = Alignment.CenterStart
         ) {
-            if (session != null) {
-                Text(
-                    "사고 모드 시작 ${formatClock(session.startedAtMillis)}",
-                    style = PitCrewTheme.typography.caption,
-                    color = colors.textSecondary
-                )
-            }
+            // 시작 시각은 세션이 있을 때만, 동의 상태(SC-205에서 정한 값)는 항상 한 줄로 보여 준다.
+            Text(
+                listOfNotNull(session?.let { "사고 모드 시작 ${formatClock(it.startedAtMillis)}" }, consentLine).joinToString(" · "),
+                style = PitCrewTheme.typography.caption,
+                color = colors.textSecondary
+            )
         }
     }
 }

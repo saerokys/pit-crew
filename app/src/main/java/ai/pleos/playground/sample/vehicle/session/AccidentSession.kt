@@ -1,5 +1,6 @@
 package ai.pleos.playground.sample.vehicle.session
 
+import ai.pleos.playground.sample.vehicle.location.LocationResult
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -17,8 +18,13 @@ data class AccidentSession(
     /** SC-220 부상 응답. 선택하지 않고 나가면 "응답 안 함". */
     val injury: InjuryAnswer = InjuryAnswer.NOT_ANSWERED,
     /** SC-200에서 읽은 차량 상태(SC-250에서 다시 읽으면 갱신). 읽기 전이면 null. */
-    val vehicle: VehicleSnapshot? = null
+    val vehicle: VehicleSnapshot? = null,
+    /** 사고 모드를 시작할 때 SC-205에서 위치를 허용했는지. false면 위치 표시를 모두 숨긴다. */
+    val locationRequested: Boolean = false,
+    /** 위치 읽기 결과(메모리에만 보관). 읽는 중이거나 요청하지 않았으면 null. */
+    val locationResult: LocationResult? = null
 ) {
+    fun withLocation(result: LocationResult): AccidentSession = copy(locationResult = result)
     fun isChecked(id: String): Boolean = checks[id] == true
     fun withChecked(id: String, checked: Boolean): AccidentSession = copy(checks = checks + (id to checked))
     fun withInjury(answer: InjuryAnswer): AccidentSession = copy(injury = answer)

@@ -1,5 +1,6 @@
 package ai.pleos.playground.sample.vehicle.ui.summary
 
+import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.session.OtherPartyChecklist
@@ -64,6 +65,23 @@ fun vehicleLines(snapshot: VehicleSnapshot?): List<String> = listOf(
     valueText("주행 거리", snapshot?.odometer) { "${formatNumber(it)}km" },
     if (snapshot != null) "읽은 시각 ${formatClock(snapshot.readAtMillis)}" else "읽은 시각 확인 불가"
 )
+
+/** 위치 표시 상태. null이면 위치를 허용하지 않았으므로 아무것도 보이지 않는다. 좌표는 어디에도 보이지 않는다. */
+enum class LocationUi { PENDING, OK, UNAVAILABLE }
+
+fun locationUi(session: AccidentSession?): LocationUi? {
+    if (session == null || !session.locationRequested) return null
+    val result = session.locationResult ?: return LocationUi.PENDING
+    return if (result.status == LocationStatus.OK && result.location != null) LocationUi.OK else LocationUi.UNAVAILABLE
+}
+
+/** SC-221, SC-260에 덧붙이는 한 줄(위치를 허용하지 않았으면 null). */
+fun locationStateText(session: AccidentSession?): String? = when (locationUi(session)) {
+    null -> null
+    LocationUi.PENDING -> "위치 확인 중이에요"
+    LocationUi.OK -> "위치 확인됨"
+    LocationUi.UNAVAILABLE -> "위치 확인 불가"
+}
 
 /** 상대방 확인(SC-240) 체크 개수 요약. 상대방 정보 자체는 저장하지 않으므로 개수만 보여 준다. */
 fun otherPartyText(session: AccidentSession?): String {

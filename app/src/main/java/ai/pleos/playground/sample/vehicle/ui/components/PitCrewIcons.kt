@@ -173,6 +173,27 @@ object PitCrewIcons {
         }
     }
 
+    /** 네트워크(SC-205) */
+    val Wifi: ImageVector by lazy {
+        icon("Wifi") {
+            moveTo(2.5f, 9.5f); arcToRelative(13f, 13f, 0f, false, true, 19f, 0f)
+            moveTo(5.5f, 13f); arcToRelative(8.5f, 8.5f, 0f, false, true, 13f, 0f)
+            moveTo(8.8f, 16.5f); arcToRelative(4f, 4f, 0f, false, true, 6.4f, 0f)
+            moveTo(12f, 19.8f); lineTo(12f, 19.9f)
+        }
+    }
+
+    /** 안심 안내(SC-205 하단) */
+    val ShieldCheck: ImageVector by lazy {
+        icon("ShieldCheck") {
+            moveTo(12f, 3f); lineTo(19.5f, 6f); lineTo(19.5f, 12f)
+            curveTo(19.5f, 16.5f, 16f, 19.8f, 12f, 21f)
+            curveTo(8f, 19.8f, 4.5f, 16.5f, 4.5f, 12f)
+            lineTo(4.5f, 6f); close()
+            moveTo(8.5f, 12f); lineTo(11f, 14.5f); lineTo(15.5f, 9.5f)
+        }
+    }
+
     /** 사고 장소 */
     val Pin: ImageVector by lazy {
         icon("Pin") {

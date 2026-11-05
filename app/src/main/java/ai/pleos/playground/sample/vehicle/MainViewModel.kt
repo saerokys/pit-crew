@@ -16,7 +16,12 @@ import ai.pleos.playground.sample.vehicle.ui.data.AppPage
 import ai.pleos.playground.sample.vehicle.ui.data.ApiExplorerPane
 import ai.pleos.playground.sample.vehicle.ui.data.FeatureRequestFlow
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
+import ai.pleos.playground.sample.vehicle.location.LocationReader
+import ai.pleos.playground.sample.vehicle.location.LocationStatus
+import ai.pleos.playground.sample.vehicle.location.isLocationSupported
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.settings.Consent
+import ai.pleos.playground.sample.vehicle.settings.ConsentStore
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
@@ -64,6 +69,8 @@ class MainViewModel(application: Application) :
     private var activeTypedMethodId: String? = null
     private var readJob: Job? = null
     private var preCheckJob: Job? = null
+    private var locationJob: Job? = null
+    private val consentStore = ConsentStore(application)
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -71,7 +78,23 @@ class MainViewModel(application: Application) :
         runCatching {
             _uiState.update { it.copy(runtimeVersions = RuntimeVersionProvider(application).read()) }
         }
+        runCatching {
+            _uiState.update { it.copy(consent = consentStore.load(), locationSupported = isLocationSupported(application)) }
+        }
         startVehicleLink()
+    }
+
+    /** SC-205 [다음]: 스위치 3개의 값을 저장하고 "정했음"으로 표시한다. 위치 허용 요청은 화면에서 이미 끝났다. */
+    fun confirmConsent(location: Boolean, voice: Boolean, network: Boolean) {
+        val consent = Consent(location = location, voice = voice, network = network, decided = true)
+        consentStore.save(consent)
+        _uiState.update { it.copy(consent = consent) }
+    }
+
+    /** 디버그 빌드의 [동의 초기화]: 저장된 동의 설정만 지운다(위치 권한은 건드리지 않는다). */
+    fun resetConsent() {
+        consentStore.clear()
+        _uiState.update { it.copy(consent = Consent()) }
     }
 
     /**
@@ -189,7 +212,17 @@ class MainViewModel(application: Application) :
     fun startAccidentSession() {
         _uiState.update {
             if (it.accidentSession != null) it
-            else it.copy(accidentSession = AccidentSession(startedAtMillis = System.currentTimeMillis()))
+            else it.copy(
+                accidentSession = AccidentSession(
+                    startedAtMillis = System.currentTimeMillis(),
+                    locationRequested = it.consent.location
+                )
+            )
+        }
+        // 위치는 SC-205에서 허용한 경우에만, 사고 모드 시작 때 한 번만 읽는다(꺼져 있으면 FusedLocation을 부르지 않는다).
+        val session = _uiState.value.accidentSession
+        if (session != null && session.locationRequested && session.locationResult == null && locationJob?.isActive != true) {
+            readLocationOnce(session.startedAtMillis)
         }
         // SC-200 [네, 세웠어요]에서 차량 상태를 한 번 읽는다. 기다리지 않고 SC-210으로 가며, 실패해도 진행한다.
         val state = _uiState.value
@@ -228,6 +261,30 @@ class MainViewModel(application: Application) :
         }
     }
 
+    private fun readLocationOnce(startedAt: Long) {
+        locationJob = viewModelScope.launch {
+            try {
+                val result = LocationReader(getApplication()).readOnce()
+                // 좌표는 로그에 남기지 않는다. 결과 종류만 남긴다.
+                Log.i(TAG, "SC-200 location: ${result.status.name}" + (result.errorText?.let { " ($it)" } ?: ""))
+                _uiState.update { state ->
+                    val session = state.accidentSession
+                    if (session == null || session.startedAtMillis != startedAt) state
+                    else state.copy(accidentSession = session.withLocation(result))
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "SC-200 location failed: ${e.javaClass.simpleName}")
+                _uiState.update { state ->
+                    val session = state.accidentSession
+                    if (session == null || session.startedAtMillis != startedAt) state
+                    else state.copy(accidentSession = session.withLocation(ai.pleos.playground.sample.vehicle.location.LocationResult(LocationStatus.ERROR)))
+                }
+            }
+        }
+    }
+
     private fun describe(s: VehicleSnapshot): String =
         "doors=${s.doorsState.name}${s.doors.map { "${it.key.name}=${it.value}" }} " +
             "windows=${s.windowsState.name}${s.windows.map { "${it.key.name}=${it.value}" }} " +
@@ -251,6 +308,7 @@ class MainViewModel(application: Application) :
     /** 사고 모드를 나가거나 끝냈을 때(홈 도착) 세션 데이터를 버린다. */
     fun endAccidentSession() {
         readJob?.cancel()
+        locationJob?.cancel()
         _uiState.update {
             if (it.accidentSession == null && !it.isReadingVehicle) it
             else it.copy(accidentSession = null, isReadingVehicle = false)

@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
                     onReadVehicle = viewModel::readVehicleState,
                     onCheckPreDeparture = viewModel::checkPreDeparture,
                     onRecheckLink = viewModel::recheckVehicleLink,
+                    onConfirmConsent = viewModel::confirmConsent,
+                    onResetConsent = viewModel::resetConsent,
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

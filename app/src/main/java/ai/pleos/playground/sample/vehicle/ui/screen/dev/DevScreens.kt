@@ -36,8 +36,10 @@ import androidx.compose.ui.unit.dp
 fun DevMenuScreen(
     onOpenApiExplorer: () -> Unit,
     onOpenComponents: () -> Unit,
+    onResetConsent: () -> Unit,
     onBackHome: () -> Unit
 ) {
+    var consentCleared by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -48,6 +50,15 @@ fun DevMenuScreen(
         Text("개발자 도구 (디버그 전용)", style = PitCrewTheme.typography.title, color = PitCrewTheme.colors.textPrimary)
         PitCrewButton("API 탐색기 (읽기 전용)", onClick = onOpenApiExplorer, modifier = Modifier.width(720.dp))
         PitCrewButton("컴포넌트 미리보기", onClick = onOpenComponents, modifier = Modifier.width(720.dp))
+        // 디버그 전용(Phase 14에서 제거): 저장된 동의 설정만 지운다. 위치 권한은 건드리지 않는다.
+        PitCrewButton(
+            "동의 초기화 (SC-205 다시 보기)",
+            onClick = { onResetConsent(); consentCleared = true },
+            modifier = Modifier.width(720.dp)
+        )
+        if (consentCleared) {
+            Text("동의 설정을 지웠어요", style = PitCrewTheme.typography.caption, color = PitCrewTheme.colors.textSecondary)
+        }
         PitCrewButton("홈으로", onClick = onBackHome, modifier = Modifier.width(720.dp))
     }
 }

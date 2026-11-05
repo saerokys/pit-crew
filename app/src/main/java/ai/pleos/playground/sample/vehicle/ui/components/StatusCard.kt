@@ -32,10 +32,11 @@ fun StatusCard(
     isMessage: Boolean = false,
     largeValue: Boolean = false,
     highlight: Boolean = false,
-    hint: String? = null
+    hint: String? = null,
+    dashed: Boolean = false
 ) {
     val colors = PitCrewTheme.colors
-    PitCrewCard(modifier = modifier, padding = 24.dp, borderColor = if (highlight) colors.statusWarn else null) {
+    PitCrewCard(modifier = modifier, padding = 24.dp, dashed = dashed, borderColor = if (highlight) colors.statusWarn else null) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(PitCrewDimens.iconSize))
