@@ -3,10 +3,12 @@ package ai.pleos.playground.sample.vehicle.ui.screen
 import ai.pleos.playground.sample.vehicle.BuildConfig
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.data.AppPage
+import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
+import ai.pleos.playground.sample.vehicle.ui.home.summarizeLink
+import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewDimens
+import androidx.compose.foundation.layout.width
 import ai.pleos.playground.sample.vehicle.ui.nav.PitCrewNavHost
 import ai.pleos.playground.sample.vehicle.ui.screen.dev.ComponentGalleryScreen
 import ai.pleos.playground.sample.vehicle.ui.screen.dev.DevMenuScreen
@@ -88,20 +90,28 @@ fun SampleApp(
                 DevMenuScreen(
                     onOpenApiExplorer = { onOpenDomain(VehicleDomain.DOOR) },
                     onOpenComponents = { onShowDevPage(AppPage.DEV_COMPONENTS) },
-                    onOpenFlow = { onShowDevPage(AppPage.DEV_FLOW) },
                     onBackHome = onShowHome
                 )
             }
             AppPage.DEV_COMPONENTS -> PitCrewFrame {
                 ComponentGalleryScreen(onBack = { onShowDevPage(AppPage.DEV_MENU) })
             }
-            AppPage.DEV_FLOW -> PitCrewFrame {
-                PitCrewNavHost(onExit = { onShowDevPage(AppPage.DEV_MENU) })
+            AppPage.HOME -> PitCrewFrame {
+                PitCrewNavHost(
+                    startupDone = uiState.startup == StartupPhase.DONE,
+                    summary = summarizeLink(uiState.isInitialized, uiState.featureSupport),
+                    // 개발자 도구 진입점: 디버그 빌드에서만 상단 바 오른쪽에 둔다(Phase 14에서 제거).
+                    topBarTrailing = if (devToolsEnabled) {
+                        {
+                            PitCrewButton(
+                                text = "개발자 도구",
+                                onClick = { onShowDevPage(AppPage.DEV_MENU) },
+                                modifier = Modifier.width(PitCrewDimens.prevButtonWidth)
+                            )
+                        }
+                    } else null
+                )
             }
-            AppPage.HOME -> HomePlaceholder(
-                showDevTools = devToolsEnabled,
-                onOpenDevTools = { onShowDevPage(AppPage.DEV_MENU) }
-            )
         }
 
         SnackbarHost(
@@ -111,23 +121,6 @@ fun SampleApp(
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(24.dp)
         )
-    }
-}
-
-// Phase 2에서 SC-100 홈으로 교체할 임시 자리표시 화면.
-@Composable
-private fun HomePlaceholder(showDevTools: Boolean, onOpenDevTools: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(48.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Pit Crew (Phase 2에서 홈 구현)")
-        if (showDevTools) {
-            Button(onClick = onOpenDevTools, modifier = Modifier.padding(top = 24.dp)) {
-                Text("개발자 도구 (디버그 전용)")
-            }
-        }
     }
 }
 

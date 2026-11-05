@@ -96,6 +96,38 @@ object PitCrewIcons {
         }
     }
 
+    /** 출발 전 점검 */
+    val Clipboard: ImageVector by lazy {
+        icon("Clipboard") {
+            moveTo(9f, 4.5f); lineTo(6.5f, 4.5f)
+            arcToRelative(2f, 2f, 0f, false, false, -2f, 2f)
+            lineTo(4.5f, 19.5f)
+            arcToRelative(2f, 2f, 0f, false, false, 2f, 2f)
+            lineTo(17.5f, 21.5f)
+            arcToRelative(2f, 2f, 0f, false, false, 2f, -2f)
+            lineTo(19.5f, 6.5f)
+            arcToRelative(2f, 2f, 0f, false, false, -2f, -2f)
+            lineTo(15f, 4.5f)
+            moveTo(9f, 3f); lineTo(15f, 3f); lineTo(15f, 6f); lineTo(9f, 6f); close()
+            moveTo(8f, 11f); lineTo(9.2f, 12.2f); lineTo(11f, 10f)
+            moveTo(13f, 11.3f); lineTo(16.2f, 11.3f)
+            moveTo(8f, 16f); lineTo(9.2f, 17.2f); lineTo(11f, 15f)
+            moveTo(13f, 16.3f); lineTo(16.2f, 16.3f)
+        }
+    }
+
+    /** 설정·정보 */
+    val Sliders: ImageVector by lazy {
+        icon("Sliders") {
+            moveTo(3f, 8f); lineTo(9.5f, 8f)
+            circle(12f, 8f, 2.5f)
+            moveTo(14.5f, 8f); lineTo(21f, 8f)
+            moveTo(3f, 16f); lineTo(7.5f, 16f)
+            circle(10f, 16f, 2.5f)
+            moveTo(12.5f, 16f); lineTo(21f, 16f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {

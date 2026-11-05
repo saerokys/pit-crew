@@ -17,7 +17,9 @@ class PitCrewTypography(
     val body: TextStyle,
     val caption: TextStyle,
     val button: TextStyle,
-    val badge: TextStyle
+    val badge: TextStyle,
+    val heroTitle: TextStyle,
+    val heroSub: TextStyle
 )
 
 private val tracking = (-0.01).em // 자간 -1%
@@ -28,5 +30,7 @@ val PitCrewDefaultTypography = PitCrewTypography(
     body = TextStyle(fontSize = 32.sp, lineHeight = 45.sp, fontWeight = FontWeight.Normal, letterSpacing = tracking),
     caption = TextStyle(fontSize = 28.sp, lineHeight = 40.sp, fontWeight = FontWeight.Normal, letterSpacing = tracking),
     button = TextStyle(fontSize = 36.sp, lineHeight = 45.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
-    badge = TextStyle(fontSize = 28.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking)
+    badge = TextStyle(fontSize = 28.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
+    heroTitle = TextStyle(fontSize = 80.sp, lineHeight = 96.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
+    heroSub = TextStyle(fontSize = 36.sp, lineHeight = 48.sp, fontWeight = FontWeight.Normal, letterSpacing = tracking)
 )

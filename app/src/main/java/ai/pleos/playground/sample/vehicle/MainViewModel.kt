@@ -16,19 +16,26 @@ import ai.pleos.playground.sample.vehicle.ui.data.AppPage
 import ai.pleos.playground.sample.vehicle.ui.data.ApiExplorerPane
 import ai.pleos.playground.sample.vehicle.ui.data.FeatureRequestFlow
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
+import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
 import ai.pleos.playground.sample.vehicle.ui.data.withFeatureResult
+import ai.pleos.playground.sample.vehicle.vehicle.CapabilityProbe
+import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleClient
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleClient.DoorOperation
 import ai.pleos.playground.sample.vehicle.vehicle.RuntimeVersionProvider
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) :
     AndroidViewModel(application),
@@ -39,30 +46,63 @@ class MainViewModel(application: Application) :
     val uiState = _uiState.asStateFlow()
 
     private val vehicleClient = VehicleClient(application, this)
-    private val apiExplorer = VehicleApiExplorer(
-        session = vehicleClient,
-        callback = this
-    )
+    // 리플렉션 탐색기는 개발자 도구를 열 때 처음 만든다(시작 시 실패가 앱을 멈추지 않게).
+    private var explorerInstance: VehicleApiExplorer? = null
+    private val apiExplorer: VehicleApiExplorer
+        get() = explorerInstance ?: VehicleApiExplorer(
+            session = vehicleClient,
+            callback = this
+        ).also { explorerInstance = it }
     private var activeTypedMethodId: String? = null
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
     init {
-        val featureCounts = VehicleDomain.entries.associateWith { domain ->
-            apiFeatures(domain, apiExplorer.methods(domain)).size
+        runCatching {
+            _uiState.update { it.copy(runtimeVersions = RuntimeVersionProvider(application).read()) }
         }
-        _uiState.update {
-            it.copy(
-                runtimeVersions = RuntimeVersionProvider(application).read(),
-                domainFeatureCounts = featureCounts
-            )
+        startVehicleLink()
+    }
+
+    /**
+     * SC-000: Vehicle SDK 초기화 -> 5개 기능의 지원 여부 확인 -> 결과 보관.
+     * 초기화가 실패해도 홈으로 가고 차량 연동만 끈다. 값 읽기는 하지 않는다.
+     */
+    private fun startVehicleLink() {
+        val initialized = try {
+            vehicleClient.initialize()
+        } catch (e: Exception) {
+            false
         }
-        if (vehicleClient.initialize()) {
+        Log.i(TAG, "SC-000 vehicle initialize: $initialized")
+        if (!initialized) {
             _uiState.update {
                 it.copy(
-                    isInitialized = true
+                    isInitialized = false,
+                    startup = StartupPhase.DONE,
+                    featureSupport = VehicleFeature.entries.associateWith { SupportState.UNKNOWN },
+                    errorMessage = null // 홈에서 한국어 안내를 보여 준다(기술 오류 문구는 숨김)
                 )
             }
+            return
+        }
+        _uiState.update { it.copy(isInitialized = true) }
+        viewModelScope.launch {
+            val result = CapabilityProbe(vehicleClient).probe()
+            result.forEach { (feature, state) -> Log.i(TAG, "SC-000 capability ${feature.name}: ${state.name}") }
+            _uiState.update { it.copy(featureSupport = result, startup = StartupPhase.DONE) }
+        }
+    }
+
+    private fun ensureDomainFeatureCounts() {
+        if (_uiState.value.domainFeatureCounts.isNotEmpty()) return
+        try {
+            val counts = VehicleDomain.entries.associateWith { domain ->
+                apiFeatures(domain, apiExplorer.methods(domain)).size
+            }
+            _uiState.update { it.copy(domainFeatureCounts = counts) }
+        } catch (e: Exception) {
+            Log.w(TAG, "domain feature counts unavailable: ${e.message}")
         }
     }
 
@@ -83,6 +123,15 @@ class MainViewModel(application: Application) :
     }
 
     fun showApiExplorer(domain: VehicleDomain) {
+        try {
+            openApiExplorer(domain)
+        } catch (e: Exception) {
+            publishError(e)
+        }
+    }
+
+    private fun openApiExplorer(domain: VehicleDomain) {
+        ensureDomainFeatureCounts()
         if (_uiState.value.isSubscribed) {
             vehicleClient.stopDoorPositionUpdates()
         }
@@ -479,8 +528,10 @@ class MainViewModel(application: Application) :
     }
 
     override fun onCleared() {
-        apiExplorer.release()
-        vehicleClient.release()
+        Log.i(TAG, "onCleared: releasing Vehicle SDK")
+        runCatching { explorerInstance?.release() }
+        runCatching { vehicleClient.release() }
+        Log.i(TAG, "onCleared: Vehicle SDK release requested")
         super.onCleared()
     }
 
@@ -599,5 +650,6 @@ class MainViewModel(application: Application) :
 
     companion object {
         private const val MAX_EVENT_COUNT = 12
+        private const val TAG = "PitCrewVehicle"
     }
 }

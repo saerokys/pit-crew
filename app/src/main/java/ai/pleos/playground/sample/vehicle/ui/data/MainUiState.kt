@@ -6,6 +6,8 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiFeatureDescriptor
 import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
+import ai.pleos.playground.sample.vehicle.vehicle.SupportState
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
 
 data class MainUiState(
     val page: AppPage = AppPage.HOME,
@@ -26,6 +28,8 @@ data class MainUiState(
     val featureValueRanges: Map<String, Map<String, ApiNumericRange>> = emptyMap(),
     val explorerEvents: List<String> = emptyList(),
     val isInitialized: Boolean = false,
+    val startup: StartupPhase = StartupPhase.LOADING,
+    val featureSupport: Map<VehicleFeature, SupportState> = emptyMap(),
     val isSubscribed: Boolean = false,
     val subscribedFeatureId: String? = null,
     val capabilityAccess: String? = null,
@@ -71,8 +75,13 @@ enum class AppPage {
     HOME,
     DEV_MENU,
     DEV_TOOLS,
-    DEV_COMPONENTS,
-    DEV_FLOW
+    DEV_COMPONENTS
+}
+
+/** SC-000 진행 상태. */
+enum class StartupPhase {
+    LOADING,
+    DONE
 }
 
 enum class ApiExplorerPane {

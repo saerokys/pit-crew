@@ -27,6 +27,12 @@ object PitCrewDimens {
     val stepSegmentWidth = 48.dp
     val stepSegmentHeight = 16.dp
     val stepSegmentGap = 8.dp
+    // 홈(SC-100) 시안에서 읽은 값
+    val homeCardPadding = 48.dp
+    val heroIconSize = 120.dp
+    val menuIconSize = 64.dp
+    val homeStatusTopGap = 32.dp
+    val homeHintHeight = 84.dp
 }
 
 object PitCrewShapes {

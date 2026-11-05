@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 fun DevMenuScreen(
     onOpenApiExplorer: () -> Unit,
     onOpenComponents: () -> Unit,
-    onOpenFlow: () -> Unit,
     onBackHome: () -> Unit
 ) {
     Column(
@@ -49,7 +48,6 @@ fun DevMenuScreen(
         Text("개발자 도구 (디버그 전용)", style = PitCrewTheme.typography.title, color = PitCrewTheme.colors.textPrimary)
         PitCrewButton("API 탐색기 (읽기 전용)", onClick = onOpenApiExplorer, modifier = Modifier.width(720.dp))
         PitCrewButton("컴포넌트 미리보기", onClick = onOpenComponents, modifier = Modifier.width(720.dp))
-        PitCrewButton("화면 이동 틀", onClick = onOpenFlow, modifier = Modifier.width(720.dp))
         PitCrewButton("홈으로", onClick = onBackHome, modifier = Modifier.width(720.dp))
     }
 }

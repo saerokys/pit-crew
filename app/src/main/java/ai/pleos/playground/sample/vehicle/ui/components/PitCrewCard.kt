@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 
 /**
  * 카드: surface 배경, 모서리 20, divider 테두리 2, 안쪽 여백 32.
@@ -24,6 +25,7 @@ fun PitCrewCard(
     modifier: Modifier = Modifier,
     dashed: Boolean = false,
     onClick: (() -> Unit)? = null,
+    padding: Dp = PitCrewDimens.cardPadding,
     content: @Composable () -> Unit
 ) {
     val colors = PitCrewTheme.colors
@@ -34,7 +36,7 @@ fun PitCrewCard(
         m.border(BorderStroke(PitCrewDimens.cardBorder, colors.divider), PitCrewShapes.card)
     }
     if (onClick != null) m = m.clickable(role = Role.Button, onClick = onClick)
-    Column(modifier = m.padding(PitCrewDimens.cardPadding)) { content() }
+    Column(modifier = m.padding(padding)) { content() }
 }
 
 /** 카드 안의 제목(textPrimary, Bold)과 설명(textSecondary). */
