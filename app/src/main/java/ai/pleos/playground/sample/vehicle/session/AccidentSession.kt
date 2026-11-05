@@ -42,5 +42,34 @@ object SafetyChecklist {
     )
 }
 
+/** SC-230 체크 항목(SPEC): 휴대폰으로 촬영할 것. 앱은 사진을 찍거나 저장하지 않는다. */
+object RecordChecklist {
+    val items = listOf(
+        ChecklistItemDef("SC-230:vehicles_overview", "두 차량의 전체 모습"),
+        ChecklistItemDef("SC-230:damage_closeup", "파손 부위 가까이"),
+        ChecklistItemDef("SC-230:plate", "상대 차량 번호판"),
+        ChecklistItemDef("SC-230:road_signals", "도로·신호·차선 상황"),
+        ChecklistItemDef("SC-230:surroundings", "사고 장소 주변")
+    )
+}
+
+/** SC-240 체크 항목(SPEC). 체크 여부만 세션에 두고 상대방 정보는 입력받거나 저장하지 않는다. */
+object OtherPartyChecklist {
+    val items = listOf(
+        ChecklistItemDef("SC-240:plate_number", "상대 차량 번호 확인"),
+        ChecklistItemDef("SC-240:contact", "연락처 교환"),
+        ChecklistItemDef("SC-240:insurer", "상대 보험사 확인")
+    )
+}
+
+/** SC-260 요약이 화면별로 "확인함/확인 안 함"을 보여 줄 때 쓰는 체크 목록 묶음. */
+data class ChecklistSection(val screenId: String, val title: String, val items: List<ChecklistItemDef>)
+
+val AllChecklists = listOf(
+    ChecklistSection("SC-210", "안전 확보", SafetyChecklist.items),
+    ChecklistSection("SC-230", "현장 기록", RecordChecklist.items),
+    ChecklistSection("SC-240", "상대방 확인", OtherPartyChecklist.items)
+)
+
 fun formatClock(millis: Long): String =
     SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(millis))

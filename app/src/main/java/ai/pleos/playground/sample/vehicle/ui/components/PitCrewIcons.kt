@@ -206,6 +206,39 @@ object PitCrewIcons {
         }
     }
 
+    /** 사진은 앱에 저장되지 않아요 */
+    val Camera: ImageVector by lazy {
+        icon("Camera") {
+            moveTo(3.5f, 8f); lineTo(7f, 8f); lineTo(8.5f, 5.5f); lineTo(15.5f, 5.5f)
+            lineTo(17f, 8f); lineTo(20.5f, 8f); lineTo(20.5f, 18.5f); lineTo(3.5f, 18.5f)
+            close()
+            circle(12f, 13f, 3.5f)
+        }
+    }
+
+    /** 말로 메모 남기기 */
+    val Mic: ImageVector by lazy {
+        icon("Mic") {
+            moveTo(9f, 6f)
+            arcToRelative(3f, 3f, 0f, false, true, 6f, 0f)
+            lineTo(15f, 10f)
+            arcToRelative(3f, 3f, 0f, false, true, -6f, 0f)
+            close()
+            moveTo(5.5f, 11f)
+            arcToRelative(6.5f, 6.5f, 0f, false, false, 13f, 0f)
+            moveTo(12f, 17.5f); lineTo(12f, 21f)
+        }
+    }
+
+    /** 알아 두세요 */
+    val Info: ImageVector by lazy {
+        icon("Info") {
+            circle(12f, 12f, 9.5f)
+            moveTo(12f, 11f); lineTo(12f, 16.5f)
+            moveTo(12f, 7.7f); lineTo(12f, 7.8f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {

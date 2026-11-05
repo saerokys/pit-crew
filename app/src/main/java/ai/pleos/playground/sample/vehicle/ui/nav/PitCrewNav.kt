@@ -4,6 +4,8 @@ import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.accident.EmergencyScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.InjuryScreen
+import ai.pleos.playground.sample.vehicle.ui.accident.OtherPartyScreen
+import ai.pleos.playground.sample.vehicle.ui.accident.RecordScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.SafetyCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.StopCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.components.DialogButton
@@ -183,6 +185,16 @@ fun PitCrewNavHost(
                     onExitRequest = { showExitDialog = true }
                 )
                 PitCrewRoute.EMERGENCY -> EmergencyScreen(session = session)
+                PitCrewRoute.RECORD -> RecordScreen(
+                    session = session,
+                    onCheckedChange = onSetChecked,
+                    onExitRequest = { showExitDialog = true }
+                )
+                PitCrewRoute.OTHER_PARTY -> OtherPartyScreen(
+                    session = session,
+                    onCheckedChange = onSetChecked,
+                    onExitRequest = { showExitDialog = true }
+                )
                 else -> PlaceholderScreen(route, onHome = { navigator.replaceWithHome() })
             }
         }

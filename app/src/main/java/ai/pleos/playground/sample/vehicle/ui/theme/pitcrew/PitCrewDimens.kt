@@ -43,6 +43,7 @@ object PitCrewDimens {
     val progressRowGap = 12.dp
     val progressCircle = 48.dp
     val checkItemMinHeight = 144.dp
+    val checkItemCompactMinHeight = 112.dp // 항목이 5개인 SC-230용(예외)
     val infoCardWidth = 460.dp
     val infoIconSize = 56.dp
     val topBarButtonMinWidth = 248.dp
