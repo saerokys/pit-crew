@@ -57,8 +57,8 @@ SC-100 홈 ─[사고가 났어요]→ (SC-205 최초 1회) → SC-200 → SC-21
 
 | 카드 | 지원 확인 → 읽기 (샘플 앱 로그 기준 이름) | 영역 | 값 해석 |
 |---|---|---|---|
-| 문 열림 | checkDoorPositionCapabilities → getCurrentDoorPosition | Row 1~3 좌·우, Hood, Rear | 0 닫힘, 1 열림 |
-| 창문 | checkWindowPositionCapabilities → getCurrentWindowPosition | capability 응답으로 확인한 영역만 | 0~10, 10이 열림 |
+| 문 열림 | checkDoorPositionCapabilities → getCurrentDoorPosition | Row 1~3 좌·우, Hood, Rear | 0 닫힘, 0보다 크면 열림(Hood·Rear는 0~100) |
+| 창문 | checkWindowPositionCapabilities → getCurrentWindowPosition | capability 응답으로 확인한 영역만 | 0~10, 0 닫힘, 0보다 크면 열림(10 완전 열림) |
 | 배터리 | checkEvBatteryStateOfChargeCapabilities → getEvBatteryStateOfCharge | 없음 | 숫자 + %(SDK 문서 기준, 에뮬레이터 값으로 검증하지 않음) |
 | 주행 거리 | checkCurrentDistanceDrivenCapabilities → getCurrentDistanceDriven | 없음 | 숫자 + km(SDK 문서 기준, 에뮬레이터 값으로 검증하지 않음) |
 | 방향지시등 | checkTurnSignalStateCapabilities → getCurrentTurnSignalState | 없음 | OFF, LEFT 등 |
@@ -204,7 +204,7 @@ SC-100 홈 ─[사고가 났어요]→ (SC-205 최초 1회) → SC-200 → SC-21
 ### SC-300 출발 전 점검 (Phase 6)
 
 - 목적: 매일 쓰는 기능으로 재방문 이유를 만들고, 차량 상태 읽기를 평상시에도 보여 준다.
-- 점검 항목: 문 모두 닫힘(영역별) / 창문 모두 닫힘(영역별, 10이 열림) / 배터리 잔량 / 방향지시등 꺼짐
+- 점검 항목: 문 모두 닫힘(영역별, Hood·Rear 포함, 0보다 크면 열림) / 창문 모두 닫힘(영역별, 0보다 크면 열림) / 배터리 잔량 / 방향지시등 꺼짐(왼쪽·오른쪽이 켜져 있으면 확인 필요)
 - 동작: 화면에 들어오면 읽고 [다시 확인]으로 갱신한다. 결과는 "이상 없음" 또는 "확인 필요 N건"과 항목별 상태 배지로 보여 준다. 읽을 수 없는 항목은 "확인 불가"로 표시하고 **이상으로 세지 않는다.**
 - 배터리: 잔량을 %로 보여 주고 경고 판단은 하지 않는다.
 - 확인 방법: Virtual Console에서 문을 열고 [다시 확인]을 누르면 "확인 필요 1건"이 나온다. 문을 닫으면 "이상 없음"으로 돌아간다.

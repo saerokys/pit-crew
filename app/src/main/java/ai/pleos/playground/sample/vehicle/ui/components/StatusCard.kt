@@ -29,10 +29,13 @@ fun StatusCard(
     value: String,
     modifier: Modifier = Modifier,
     badge: BadgeStatus? = null,
-    isMessage: Boolean = false
+    isMessage: Boolean = false,
+    largeValue: Boolean = false,
+    highlight: Boolean = false,
+    hint: String? = null
 ) {
     val colors = PitCrewTheme.colors
-    PitCrewCard(modifier = modifier, padding = 24.dp) {
+    PitCrewCard(modifier = modifier, padding = 24.dp, borderColor = if (highlight) colors.statusWarn else null) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(PitCrewDimens.iconSize))
@@ -40,11 +43,20 @@ fun StatusCard(
                 Text(label, style = PitCrewTheme.typography.caption, color = colors.textSecondary, modifier = Modifier.weight(1f))
                 if (badge != null) StatusBadge(badge)
             }
-            Text(
-                value,
-                style = if (isMessage) PitCrewTheme.typography.cardTitle else PitCrewTheme.typography.title,
-                color = colors.textPrimary
-            )
+            Column {
+                Text(
+                    value,
+                    style = when {
+                        isMessage -> PitCrewTheme.typography.cardTitle
+                        largeValue -> PitCrewTheme.typography.statusValue
+                        else -> PitCrewTheme.typography.title
+                    },
+                    color = colors.textPrimary
+                )
+                if (hint != null) {
+                    Text(hint, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+                }
+            }
         }
     }
 }

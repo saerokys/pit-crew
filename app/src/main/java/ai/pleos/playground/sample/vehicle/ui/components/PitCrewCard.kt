@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 
@@ -26,6 +27,7 @@ fun PitCrewCard(
     dashed: Boolean = false,
     onClick: (() -> Unit)? = null,
     padding: Dp = PitCrewDimens.cardPadding,
+    borderColor: Color? = null,
     content: @Composable () -> Unit
 ) {
     val colors = PitCrewTheme.colors
@@ -33,7 +35,7 @@ fun PitCrewCard(
     m = if (dashed) {
         m.dashedBorder(colors.divider, PitCrewDimens.cardBorder, PitCrewDimens.cornerRadius)
     } else {
-        m.border(BorderStroke(PitCrewDimens.cardBorder, colors.divider), PitCrewShapes.card)
+        m.border(BorderStroke(PitCrewDimens.cardBorder, borderColor ?: colors.divider), PitCrewShapes.card)
     }
     if (onClick != null) m = m.clickable(role = Role.Button, onClick = onClick)
     Column(modifier = m.padding(padding)) { content() }

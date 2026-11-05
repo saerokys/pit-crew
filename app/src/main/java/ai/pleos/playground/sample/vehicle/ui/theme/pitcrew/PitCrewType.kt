@@ -23,7 +23,8 @@ class PitCrewTypography(
     val screenTitle: TextStyle,
     val checkItem: TextStyle,
     val cardTitle: TextStyle,
-    val tileLabel: TextStyle
+    val tileLabel: TextStyle,
+    val statusValue: TextStyle
 )
 
 private val tracking = (-0.01).em // 자간 -1%
@@ -40,5 +41,7 @@ val PitCrewDefaultTypography = PitCrewTypography(
     screenTitle = TextStyle(fontSize = 56.sp, lineHeight = 68.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
     checkItem = TextStyle(fontSize = 40.sp, lineHeight = 52.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
     cardTitle = TextStyle(fontSize = 36.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
-    tileLabel = TextStyle(fontSize = 48.sp, lineHeight = 60.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking)
+    tileLabel = TextStyle(fontSize = 48.sp, lineHeight = 60.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking),
+    // SC-300 상태 카드 값(시안에서 읽은 약 64 Bold)
+    statusValue = TextStyle(fontSize = 64.sp, lineHeight = 76.sp, fontWeight = FontWeight.Bold, letterSpacing = tracking)
 )

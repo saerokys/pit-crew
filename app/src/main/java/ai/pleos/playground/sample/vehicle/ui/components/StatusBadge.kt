@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class BadgeStatus(val defaultLabel: String, val icon: ImageVector) {
@@ -30,7 +31,8 @@ enum class BadgeStatus(val defaultLabel: String, val icon: ImageVector) {
 fun StatusBadge(
     status: BadgeStatus,
     modifier: Modifier = Modifier,
-    label: String = status.defaultLabel
+    label: String = status.defaultLabel,
+    height: Dp = PitCrewDimens.badgeHeight
 ) {
     val c = PitCrewTheme.colors
     val bg = when (status) {
@@ -46,7 +48,7 @@ fun StatusBadge(
     }
     Row(
         modifier = modifier
-            .height(PitCrewDimens.badgeHeight)
+            .height(height)
             .background(bg, PitCrewShapes.pill)
             .padding(start = 12.dp, end = 28.dp),
         verticalAlignment = Alignment.CenterVertically

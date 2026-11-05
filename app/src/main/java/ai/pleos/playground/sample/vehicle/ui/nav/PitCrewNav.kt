@@ -16,6 +16,11 @@ import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
+import ai.pleos.playground.sample.vehicle.ui.precheck.PreDepartureScreen
+import ai.pleos.playground.sample.vehicle.ui.status.LinkStatusScreen
+import ai.pleos.playground.sample.vehicle.vehicle.SupportState
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import ai.pleos.playground.sample.vehicle.ui.summary.SummaryScreen
 import ai.pleos.playground.sample.vehicle.ui.vehicle.VehicleStateScreen
 import ai.pleos.playground.sample.vehicle.ui.home.LinkSummary
@@ -105,6 +110,13 @@ fun PitCrewNavHost(
     onEndSession: () -> Unit,
     isReadingVehicle: Boolean,
     onReadVehicle: () -> Unit,
+    preCheckSnapshot: VehicleSnapshot?,
+    isPreChecking: Boolean,
+    onCheckPreDeparture: () -> Unit,
+    featureSupport: Map<VehicleFeature, SupportState>,
+    linkCheckedAtMillis: Long?,
+    isCheckingLink: Boolean,
+    onRecheckLink: () -> Unit,
     modifier: Modifier = Modifier,
     topBarTrailing: (@Composable () -> Unit)? = null
 ) {
@@ -148,7 +160,7 @@ fun PitCrewNavHost(
         val step = route.step
         val trailing: (@Composable () -> Unit)? = when {
             showSubtitle -> topBarTrailing // 개발자 도구 버튼(디버그 빌드, 홈에서만)
-            step != null && step >= 2 -> {
+            step != null && step >= 2 || route == PitCrewRoute.PRE_DEPARTURE -> {
                 // [소리로 듣기]는 Phase 9 전까지 회색 비활성
                 { TopBarButton(text = "소리로 듣기", icon = PitCrewIcons.SpeakerOn, onClick = {}, enabled = false) }
             }
@@ -203,6 +215,15 @@ fun PitCrewNavHost(
                     onReread = onReadVehicle
                 )
                 PitCrewRoute.SUMMARY -> SummaryScreen(session = session)
+                PitCrewRoute.PRE_DEPARTURE -> PreDepartureScreen(
+                    snapshot = preCheckSnapshot,
+                    isChecking = isPreChecking,
+                    onCheck = onCheckPreDeparture
+                )
+                PitCrewRoute.VEHICLE_LINK -> LinkStatusScreen(
+                    featureSupport = featureSupport,
+                    checkedAtMillis = linkCheckedAtMillis
+                )
                 PitCrewRoute.OTHER_PARTY -> OtherPartyScreen(
                     session = session,
                     onCheckedChange = onSetChecked,
@@ -216,7 +237,21 @@ fun PitCrewNavHost(
                 )
             }
         }
-        if (route.step != null) {
+        if (route == PitCrewRoute.PRE_DEPARTURE || route == PitCrewRoute.VEHICLE_LINK) {
+            // 사고 모드 밖 점검 화면: 왼쪽 [홈으로], 오른쪽 채운 [다시 확인]
+            val busy = if (route == PitCrewRoute.PRE_DEPARTURE) isPreChecking else isCheckingLink
+            PitCrewBottomBar(
+                onPrevious = { navigator.replaceWithHome() },
+                previousLabel = "홈으로",
+                previousIcon = null,
+                previousWidth = PitCrewDimens.homeButtonWidth,
+                onNext = if (route == PitCrewRoute.PRE_DEPARTURE) onCheckPreDeparture else onRecheckLink,
+                nextLabel = if (busy) "확인 중…" else "다시 확인",
+                nextIcon = PitCrewIcons.Refresh,
+                nextWidth = PitCrewDimens.recheckButtonWidth,
+                nextEnabled = !busy
+            )
+        } else if (route.step != null) {
             PitCrewBottomBar(
                 onPrevious = { goBack() },
                 // SC-200은 두 선택 버튼으로만 이동한다. 그 밖의 [다음]은 체크와 관계없이 항상 눌린다.

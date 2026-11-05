@@ -63,6 +63,7 @@ class MainViewModel(application: Application) :
         ).also { explorerInstance = it }
     private var activeTypedMethodId: String? = null
     private var readJob: Job? = null
+    private var preCheckJob: Job? = null
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -78,18 +79,14 @@ class MainViewModel(application: Application) :
      * 초기화가 실패해도 홈으로 가고 차량 연동만 끈다. 값 읽기는 하지 않는다.
      */
     private fun startVehicleLink() {
-        val initialized = try {
-            vehicleClient.initialize()
-        } catch (e: Exception) {
-            false
-        }
-        Log.i(TAG, "SC-000 vehicle initialize: $initialized")
+        val initialized = tryInitialize("SC-000")
         if (!initialized) {
             _uiState.update {
                 it.copy(
                     isInitialized = false,
                     startup = StartupPhase.DONE,
                     featureSupport = VehicleFeature.entries.associateWith { SupportState.UNKNOWN },
+                    linkCheckedAtMillis = System.currentTimeMillis(),
                     errorMessage = null // 홈에서 한국어 안내를 보여 준다(기술 오류 문구는 숨김)
                 )
             }
@@ -98,9 +95,93 @@ class MainViewModel(application: Application) :
         _uiState.update { it.copy(isInitialized = true) }
         viewModelScope.launch {
             val result = CapabilityProbe(vehicleClient).probe()
-            result.states.forEach { (feature, state) -> Log.i(TAG, "SC-000 capability ${feature.name}: ${state.name}") }
-            Log.i(TAG, "SC-000 capability areas: door=${result.areas.door.map { it.name }} window=${result.areas.window.map { it.name }}")
-            _uiState.update { it.copy(featureSupport = result.states, capabilityAreas = result.areas, startup = StartupPhase.DONE) }
+            logProbe("SC-000", result)
+            _uiState.update {
+                it.copy(
+                    featureSupport = result.states,
+                    capabilityAreas = result.areas,
+                    linkCheckedAtMillis = System.currentTimeMillis(),
+                    startup = StartupPhase.DONE
+                )
+            }
+        }
+    }
+
+    private fun tryInitialize(tag: String): Boolean {
+        val initialized = try {
+            vehicleClient.initialize()
+        } catch (e: Exception) {
+            false
+        }
+        Log.i(TAG, "$tag vehicle initialize: $initialized")
+        return initialized
+    }
+
+    private fun logProbe(tag: String, result: ai.pleos.playground.sample.vehicle.vehicle.CapabilityResult) {
+        result.states.forEach { (feature, state) -> Log.i(TAG, "$tag capability ${feature.name}: ${state.name}") }
+        Log.i(TAG, "$tag capability areas: door=${result.areas.door.map { it.name }} window=${result.areas.window.map { it.name }}")
+    }
+
+    /**
+     * SC-400 [다시 확인]: 지원 여부를 다시 확인한다(홈의 "N개를 읽을 수 있어요"도 같은 상태라 함께 바뀐다).
+     * 이미 초기화에 성공했으면 다시 초기화하지 않고, 이전에 실패했을 때만 한 번 더 시도한다. 값은 읽지 않는다.
+     */
+    fun recheckVehicleLink() {
+        if (_uiState.value.isCheckingLink) return
+        _uiState.update { it.copy(isCheckingLink = true) }
+        viewModelScope.launch {
+            try {
+                val initialized = _uiState.value.isInitialized || tryInitialize("SC-400")
+                if (initialized) {
+                    val result = CapabilityProbe(vehicleClient).probe()
+                    logProbe("SC-400", result)
+                    _uiState.update {
+                        it.copy(
+                            isInitialized = true,
+                            featureSupport = result.states,
+                            capabilityAreas = result.areas,
+                            linkCheckedAtMillis = System.currentTimeMillis()
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isInitialized = false,
+                            featureSupport = VehicleFeature.entries.associateWith { SupportState.UNKNOWN },
+                            linkCheckedAtMillis = System.currentTimeMillis()
+                        )
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "SC-400 recheck failed: ${e.javaClass.simpleName}")
+            } finally {
+                _uiState.update { it.copy(isCheckingLink = false) }
+            }
+        }
+    }
+
+    /**
+     * SC-300 출발 전 점검: 들어올 때와 [다시 확인]에서 5개 중 필요한 값을 읽는다(get만, 사고 모드 세션을 만들거나 바꾸지 않음).
+     * 시작할 때 이전 값을 지워 오래된 값이 남지 않게 한다. 같은 읽기 코드(VehicleReader)를 쓴다.
+     */
+    fun checkPreDeparture() {
+        preCheckJob?.cancel()
+        _uiState.update { it.copy(preCheckSnapshot = null, isPreChecking = true) }
+        preCheckJob = viewModelScope.launch {
+            try {
+                val ready = withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
+                    ?: _uiState.value
+                val snapshot = VehicleReader(vehicleClient).readAll(ready.featureSupport, ready.capabilityAreas)
+                Log.i(TAG, "SC-300 read: " + describe(snapshot))
+                _uiState.update { it.copy(preCheckSnapshot = snapshot, isPreChecking = false) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "SC-300 read failed: ${e.javaClass.simpleName}")
+                _uiState.update { it.copy(isPreChecking = false) }
+            }
         }
     }
 

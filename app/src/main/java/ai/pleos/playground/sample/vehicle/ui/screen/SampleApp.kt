@@ -54,6 +54,8 @@ fun SampleApp(
     onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
     onReadVehicle: () -> Unit,
+    onCheckPreDeparture: () -> Unit,
+    onRecheckLink: () -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -113,6 +115,13 @@ fun SampleApp(
                     onEndSession = onEndSession,
                     isReadingVehicle = uiState.isReadingVehicle,
                     onReadVehicle = onReadVehicle,
+                    preCheckSnapshot = uiState.preCheckSnapshot,
+                    isPreChecking = uiState.isPreChecking,
+                    onCheckPreDeparture = onCheckPreDeparture,
+                    featureSupport = uiState.featureSupport,
+                    linkCheckedAtMillis = uiState.linkCheckedAtMillis,
+                    isCheckingLink = uiState.isCheckingLink,
+                    onRecheckLink = onRecheckLink,
                     // 개발자 도구 진입점: 디버그 빌드에서만 상단 바 오른쪽에 둔다(Phase 14에서 제거).
                     topBarTrailing = if (devToolsEnabled) {
                         {

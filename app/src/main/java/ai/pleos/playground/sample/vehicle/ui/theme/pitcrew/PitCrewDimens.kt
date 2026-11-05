@@ -58,6 +58,11 @@ object PitCrewDimens {
     // SC-260 시안에서 읽은 값
     val numberCircle = 64.dp
     val summaryChecklistWidth = 560.dp // 시안은 한 줄 카드였고 2열 구성으로 바꿔 정한 값
+    // SC-300, SC-400 시안에서 읽은 값
+    val summaryBadgeHeight = 96.dp // SC-300 오른쪽 위 요약 배지
+    val statusRowHeight = 121.dp   // SC-400 행 높이(약 121)
+    val homeButtonWidth = 400.dp   // SC-300 하단 바 [홈으로]
+    val recheckButtonWidth = 520.dp // SC-300 하단 바 [다시 확인]
 }
 
 object PitCrewShapes {

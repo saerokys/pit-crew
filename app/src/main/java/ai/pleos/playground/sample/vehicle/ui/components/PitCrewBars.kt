@@ -21,6 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -123,7 +125,13 @@ fun PitCrewBottomBar(
     onNext: (() -> Unit)?,
     modifier: Modifier = Modifier,
     onPrevious: (() -> Unit)? = null,
-    nextLabel: String = "다음"
+    nextLabel: String = "다음",
+    previousLabel: String = "이전",
+    previousIcon: ImageVector? = PitCrewIcons.ChevronLeft,
+    previousWidth: Dp = PitCrewDimens.prevButtonWidth,
+    nextIcon: ImageVector? = PitCrewIcons.ChevronRight,
+    nextWidth: Dp = PitCrewDimens.nextButtonWidth,
+    nextEnabled: Boolean = true
 ) {
     Row(
         modifier = modifier
@@ -135,10 +143,10 @@ fun PitCrewBottomBar(
     ) {
         if (onPrevious != null) {
             PitCrewButton(
-                text = "이전",
+                text = previousLabel,
                 onClick = onPrevious,
-                leadingIcon = PitCrewIcons.ChevronLeft,
-                modifier = Modifier.width(PitCrewDimens.prevButtonWidth)
+                leadingIcon = previousIcon,
+                modifier = Modifier.width(previousWidth)
             )
         }
         Spacer(Modifier.weight(1f))
@@ -147,8 +155,9 @@ fun PitCrewBottomBar(
                 text = nextLabel,
                 onClick = onNext,
                 filled = true,
-                trailingIcon = PitCrewIcons.ChevronRight,
-                modifier = Modifier.width(PitCrewDimens.nextButtonWidth)
+                enabled = nextEnabled,
+                trailingIcon = nextIcon,
+                modifier = Modifier.width(nextWidth)
             )
         }
     }
