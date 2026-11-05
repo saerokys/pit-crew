@@ -1,0 +1,114 @@
+# Pit Crew
+
+> 사고 직후 정차부터 마무리까지 안내하는 Pleos Connect 차량용 앱
+
+사고가 났을 때 당황하기 쉬운 초보 운전자를 포함한 모든 운전자가, 정차 확인 → 안전 확보 → 현장 기록 → 마무리까지 화면의 짧은 안내를 따라 할 수 있게 돕습니다. 법적 판단이나 과실 판단은 하지 않으며, 모든 안내는 **참고용**입니다(법률·의료 조언 아님).
+
+## 1. 실행 방법
+
+1. Android Studio에서 이 폴더(`pit-crew`)를 엽니다.
+2. Gradle JDK를 **JDK 21**로 설정합니다. (Settings > Build > Gradle > Gradle JDK)
+3. Gradle Sync 후 Pleos Connect Emulator(아래 3번)를 켭니다.
+4. 실행 대상으로 에뮬레이터를 고르고 ▶ Run 합니다.
+5. 홈(SC-100)에서 시작 버튼을 눌러 사고 모드를 진행합니다.
+
+> 실차 시연은 지원되지 않아 에뮬레이터 기준으로 개발·검증했습니다.
+
+## 2. APK 위치
+
+- 빌드 결과: `app/build/outputs/apk/debug/app-debug.apk`
+- 제출용 APK: `TODO` (GitHub Releases 또는 저장소 내 경로 확정 후 기재)
+
+## 3. 테스트 환경과 설정
+
+| 항목 | 값 |
+|---|---|
+| IDE / 빌드 | Android Studio, Gradle 8.10.2, JDK 21 (jvmTarget 17) |
+| 언어 / UI | Kotlin, Jetpack Compose (Material3) |
+| minSdk / compileSdk | 28 / 35 |
+| 에뮬레이터 | Pleos Connect Emulator v2.1.0 |
+| 시스템 이미지 | Pleos 시스템 이미지 API 34 (일반 Android Automotive 이미지는 사용하지 않음) |
+| 화면 영역 | 1682×1210 px (앱 표시 영역 기준) |
+| 가상 값 | 에뮬레이터의 값은 가상 값이며 화면에 "가상 차량 값" 배지를 표시합니다 |
+
+에뮬레이터 설정(마이크 접근 등)은 Pleos Connect Emulator 문서를 따릅니다. 추가로 정한 설정이 있으면 이 표에 덧붙입니다.
+
+## 4. SDK 버전
+
+| SDK | 버전 | 용도 |
+|---|---|---|
+| Pleos Vehicle SDK | 2.3.2 (Vehicle Service 2.3.22) | 차량 값 읽기 (읽기 전용) |
+| FusedLocation | 1.1.2 | 사고 위치 기록 (사용자 허용 시) |
+| NaviHelper | 3.0.5 | 길안내 요청 (사용자 선택 시) |
+| TextToSpeech | 3.3.1 | 음성 안내 (`ON_DEVICE` 모드) |
+| SpeechToText | 3.3.1 | 음성 메모 (`ON_DEVICE` 모드) |
+
+외부 API(키 불필요, 3초 안에 응답 없으면 "확인 불가"): OpenStreetMap Nominatim(주소 변환), Open-Meteo(날씨).
+보험사 연계는 **시연용 가상 보험사(목업)** 이며 화면에도 그렇게 표시합니다.
+
+## 5. 가상 값 안내
+
+- 에뮬레이터가 주는 차량 값은 실제 차량 값이 아닙니다.
+- 읽을 수 없거나 실패한 값은 앱이 종료되지 않고 **"확인 불가"** 로 표시합니다.
+- 정차 여부는 속도·기어를 읽지 않고 **사용자 확인(SC-200)** 으로 판단합니다.
+
+## 6. 지원하지 않는 항목
+
+- 차량 제어(set 호출, CONTROL_* 권한): 사용하지 않음. 매니페스트에는 읽기 권한만 선언
+- 사고 자동 감지, 에어백 상태, 문 잠김, 차대번호(VIN), 비상등 자동 확인, 타이어 값
+- 법적 판단·과실 판단·의료 조언
+- 상대방 정보, 사진, 차대번호의 저장·전송
+- 차량 화면에서의 타이핑 입력
+- 실제 보험사 연동 (시연용 목업만 제공)
+
+## 7. 개인정보 원칙
+
+- 위치·음성은 SC-205에서 사용자가 허용한 경우에만 사용합니다. 꺼져 있어도 사고 모드는 끝까지 진행됩니다.
+- 기록 저장과 외부 전송은 사용자가 켠 경우에만 이루어집니다. 보험사 전송(목업)은 사용자가 [보내기]를 눌러야 하며, 항목별 선택과 전송 로그를 보여 줍니다.
+- 키, 토큰, 비밀번호, 개인 이메일을 코드·로그·문서에 넣지 않습니다.
+
+## 8. 구조
+
+### 화면별 구조
+
+| 화면 ID | 우선순위 | 설명 |
+|---|---|---|
+| SC-000 | P0 | 앱 시작 |
+| SC-100 | P0 | 홈 (사고 모드 시작, 상태 표시, 가상 차량 값 배지) |
+| SC-200 | P0 | 정차 확인 (사용자 확인) |
+| SC-205 | P1-A | 위치·음성 허용 설정 |
+| SC-210 ~ 260 | P0 | 사고 모드 단계 안내 (세부는 기획서 참조) |
+| SC-230 | P1-B | 음성 메모 (STT) |
+| SC-270 | P1-A | 사고 기록 패키지 |
+| SC-280 | P1-B | 길안내 (NaviHelper) |
+| SC-290 | P1-B | 가상 보험사 전송 |
+| SC-300, 400 | P0 | 마무리 등 (세부는 기획서 참조) |
+| SC-500, 510, 520 | P1 | 기타 |
+
+> 화면 이름과 세부 동작은 개발이 진행되는 대로 이 표에 갱신합니다. 기준 문서: 「Pit Crew 기획서 및 MVP 상세 정의서」.
+
+### SDK별 동작
+
+| SDK | 호출 순서 | 해제 |
+|---|---|---|
+| FusedLocation | `isSupported()` → `initialize()` → `getLastKnownLocation()` (사고 모드 시작 시 1회) | `release()` |
+| NaviHelper | `initialize(onConnected, onFailed)` → 연결 후 리스너 등록 → `requestRoute()` (사용자 선택 시) | `removeListener()` → `release()` |
+| TextToSpeech | `Mode.ON_DEVICE`로 생성 → `initialize()` → `addEventListener()` → `speak()` | `stop()` → `removeEventListener()` → `release()` |
+| SpeechToText | `Mode.ON_DEVICE`로 생성 → `initialize()` → `addListener()` → `request()` | `stop()` → `removeListener()` → `release()` |
+
+공통 규칙: capability 확인 후 읽기, 모든 SDK 호출은 예외 처리, 리스너는 한 번만 등록하고 화면을 떠날 때 해제.
+
+## 9. 문서
+
+- 개발 규칙: [`CLAUDE.md`](CLAUDE.md)
+- SDK 요약: [`docs/sdk/`](docs/sdk/)
+- 기획서·화면 명세·진행 기록: `docs/` (작성 중)
+
+## 10. 개발 방식
+
+기획과 검증, 구조 설계는 개발자가 직접 하고, 코드 작성에는 생성형 AI(Claude Code)를 보조 도구로 사용했습니다. 모든 코드는 화면·SDK 단위로 나누어 만들고 빌드와 에뮬레이터 확인 후 다음 단계로 넘어갔으며, 구조와 로직은 개발자가 설명할 수 있도록 위 "구조" 절에 계속 기록합니다.
+
+## 11. 링크
+
+- GitHub: `TODO`
+- 시연 영상: `TODO`

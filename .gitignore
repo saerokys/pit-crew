@@ -1,0 +1,35 @@
+# ===== Gradle / 빌드 결과 =====
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ===== 내 컴퓨터에만 있는 설정 (경로, 키 등이 들어갈 수 있음) =====
+local.properties
+keystore.properties
+secrets.properties
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+
+# ===== Android Studio / IDE =====
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# ===== 운영체제 파일 =====
+.DS_Store
+Thumbs.db
+
+# ===== 로그, 임시 파일 =====
+*.log
+hs_err_pid*
+*.tmp
+
+# ===== 참고 =====
+# 제출용 APK는 최상위 apk/ 폴더에 넣는다. (이 폴더는 막지 않는다)
+# 빌드 중 자동으로 생기는 app/build/outputs/apk 안의 APK는 build/ 규칙으로 제외된다.
