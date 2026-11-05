@@ -9,6 +9,7 @@ import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewTheme
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+
+private val NETWORK_NOTICE_HEIGHT = 48.dp // 캡션 한 줄(줄 높이 40)이 들어가는 고정 자리
 
 /** SC-205 스위치 3개의 값. [다음]에서만 저장한다. */
 data class ConsentChoice(val location: Boolean, val voice: Boolean, val network: Boolean)
@@ -113,7 +116,14 @@ fun ConsentScreen(
                 onCheckedChange = { network = it; publish() }
             )
         }
-        Spacer(Modifier.height(PitCrewDimens.touchGap))
+        // 네트워크를 켰을 때만 보이는 안내 줄. 자리는 항상 잡아 두어 위쪽 행과 하단이 밀리지 않게 한다.
+        Spacer(Modifier.height(8.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(NETWORK_NOTICE_HEIGHT), contentAlignment = Alignment.CenterStart) {
+            if (network) {
+                Text("켜면 사고 위치를 주소 조회 서버로 보내요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         if (denied) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Icon(PitCrewIcons.Warning, contentDescription = null, tint = colors.statusWarn, modifier = Modifier.size(PitCrewDimens.iconSize))

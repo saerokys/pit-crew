@@ -1,5 +1,6 @@
 package ai.pleos.playground.sample.vehicle.ui.summary
 
+import ai.pleos.playground.sample.vehicle.address.AddressStatus
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
@@ -66,21 +67,48 @@ fun vehicleLines(snapshot: VehicleSnapshot?): List<String> = listOf(
     if (snapshot != null) "읽은 시각 ${formatClock(snapshot.readAtMillis)}" else "읽은 시각 확인 불가"
 )
 
+/** 주소 출처 표기(Nominatim 정책). 주소가 보이는 화면마다 함께 보여 준다. */
+const val OSM_CREDIT = "© OpenStreetMap contributors"
+
 /** 위치 표시 상태. null이면 위치를 허용하지 않았으므로 아무것도 보이지 않는다. 좌표는 어디에도 보이지 않는다. */
 enum class LocationUi { PENDING, OK, UNAVAILABLE }
 
 fun locationUi(session: AccidentSession?): LocationUi? {
     if (session == null || !session.locationRequested) return null
-    val result = session.locationResult ?: return LocationUi.PENDING
-    return if (result.status == LocationStatus.OK && result.location != null) LocationUi.OK else LocationUi.UNAVAILABLE
+    val status = session.locationStatus ?: return LocationUi.PENDING
+    return if (status == LocationStatus.OK) LocationUi.OK else LocationUi.UNAVAILABLE
 }
 
-/** SC-221, SC-260에 덧붙이는 한 줄(위치를 허용하지 않았으면 null). */
-fun locationStateText(session: AccidentSession?): String? = when (locationUi(session)) {
-    null -> null
-    LocationUi.PENDING -> "위치 확인 중이에요"
-    LocationUi.OK -> "위치 확인됨"
-    LocationUi.UNAVAILABLE -> "위치 확인 불가"
+/** 주소 표시 상태. null이면 주소를 조회하지 않는 경우(위치 또는 네트워크 꺼짐, 위치 확인 불가)이다. */
+enum class AddressUi { PENDING, OK, FAILED }
+
+fun addressUi(session: AccidentSession?): AddressUi? {
+    if (session == null || !session.addressRequested || locationUi(session) != LocationUi.OK) return null
+    val address = session.address ?: return AddressUi.PENDING
+    return if (address.status == AddressStatus.OK && !address.text.isNullOrBlank()) AddressUi.OK else AddressUi.FAILED
+}
+
+/** 주소 문자열(조회에 성공했을 때만). */
+fun addressText(session: AccidentSession?): String? =
+    if (addressUi(session) == AddressUi.OK) session?.address?.text else null
+
+/**
+ * SC-221, SC-260에서 기존 "사고 장소를 말로 설명하세요" 문장 아래에 덧붙이는 상태 한 줄.
+ * 위치를 허용하지 않았거나 주소가 보이는 경우는 null. [summary]가 참이면 SC-260 형식("위치: 확인됨")이다.
+ */
+fun placeStatusText(session: AccidentSession?, summary: Boolean = false): String? {
+    val prefix = if (summary) "위치: " else "위치 "
+    return when (locationUi(session)) {
+        null -> null
+        LocationUi.PENDING -> "${prefix}확인 중이에요"
+        LocationUi.UNAVAILABLE -> "${prefix}확인 불가"
+        LocationUi.OK -> when (addressUi(session)) {
+            null -> "${prefix}확인됨"
+            AddressUi.PENDING -> "주소를 찾는 중이에요"
+            AddressUi.OK -> null
+            AddressUi.FAILED -> if (summary) "위치: 확인됨, 주소 확인 불가" else "위치 확인됨 · 주소 확인 불가"
+        }
+    }
 }
 
 /** 상대방 확인(SC-240) 체크 개수 요약. 상대방 정보 자체는 저장하지 않으므로 개수만 보여 준다. */

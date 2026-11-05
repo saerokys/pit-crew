@@ -33,7 +33,9 @@ fun StatusCard(
     largeValue: Boolean = false,
     highlight: Boolean = false,
     hint: String? = null,
-    dashed: Boolean = false
+    dashed: Boolean = false,
+    labelEnd: String? = null,
+    singleLineValue: Boolean = false
 ) {
     val colors = PitCrewTheme.colors
     PitCrewCard(modifier = modifier, padding = 24.dp, dashed = dashed, borderColor = if (highlight) colors.statusWarn else null) {
@@ -42,6 +44,7 @@ fun StatusCard(
                 Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(PitCrewDimens.iconSize))
                 Spacer(Modifier.width(12.dp))
                 Text(label, style = PitCrewTheme.typography.caption, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                if (labelEnd != null) Text(labelEnd, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
                 if (badge != null) StatusBadge(badge)
             }
             Column {
@@ -52,7 +55,9 @@ fun StatusCard(
                         largeValue -> PitCrewTheme.typography.statusValue
                         else -> PitCrewTheme.typography.title
                     },
-                    color = colors.textPrimary
+                    color = colors.textPrimary,
+                    maxLines = if (singleLineValue) 1 else Int.MAX_VALUE,
+                    overflow = if (singleLineValue) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Clip
                 )
                 if (hint != null) {
                     Text(hint, style = PitCrewTheme.typography.caption, color = colors.textSecondary)

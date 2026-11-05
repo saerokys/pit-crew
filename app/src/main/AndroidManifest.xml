@@ -25,6 +25,9 @@
     <uses-permission android:name="pleos.car.permission.READ_ADAS_STATES" />
     <uses-permission android:name="pleos.car.permission.READ_WINDSHIELD_WIPERS" />
 
+    <!-- General network permission (not a vehicle permission): reverse geocoding (Nominatim) when the user turns network on in SC-205. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Location read (FusedLocation getLastKnownLocation). protectionLevel=dangerous: asked at runtime in SC-205 only when the user turns location on. -->
     <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
 

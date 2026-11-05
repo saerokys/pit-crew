@@ -45,9 +45,12 @@ fun SummaryScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
     val colors = PitCrewTheme.colors
     val rows = listOf(
         NumberedRow("무슨 일", listOf("교통사고가 났어요")),
-        NumberedRow(
+        // 주소가 있으면 주소와 출처 표기로 바꾸고, 없으면 기존 문장에 위치 상태 한 줄만 덧붙인다.
+        addressText(session)?.let { address ->
+            NumberedRow("사고 장소", listOf(address), OSM_CREDIT)
+        } ?: NumberedRow(
             "사고 장소",
-            listOfNotNull("사고 장소를 말로 설명하세요. 도로 이름이나 이정표를 말하면 좋아요.", locationStateText(session)?.let { "위치: " + it.removePrefix("위치 ") })
+            listOfNotNull("사고 장소를 말로 설명하세요. 도로 이름이나 이정표를 말하면 좋아요.", placeStatusText(session, summary = true))
         ),
         NumberedRow("다친 사람", listOf(injuryText(session?.injury ?: InjuryAnswer.NOT_ANSWERED))),
         NumberedRow("차량 상태", vehicleLines(session?.vehicle)),

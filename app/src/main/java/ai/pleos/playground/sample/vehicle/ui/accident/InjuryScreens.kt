@@ -2,7 +2,9 @@ package ai.pleos.playground.sample.vehicle.ui.accident
 
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
-import ai.pleos.playground.sample.vehicle.ui.summary.locationStateText
+import ai.pleos.playground.sample.vehicle.ui.summary.OSM_CREDIT
+import ai.pleos.playground.sample.vehicle.ui.summary.addressText
+import ai.pleos.playground.sample.vehicle.ui.summary.placeStatusText
 import ai.pleos.playground.sample.vehicle.ui.components.AccidentStepScaffold
 import ai.pleos.playground.sample.vehicle.ui.components.ChoiceTile
 import ai.pleos.playground.sample.vehicle.ui.components.EmergencyBanner
@@ -153,10 +155,13 @@ fun EmergencyScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     rows = listOf(
                         InfoRow(PitCrewIcons.Car, "사고 종류", "교통사고라고 말해요"),
-                        InfoRow(
+                        // 주소가 있을 때만 "말로 설명하세요" 문장을 주소로 바꾼다. 없으면 기존 문장에 상태 한 줄만 덧붙인다.
+                        addressText(session)?.let { address ->
+                            InfoRow(PitCrewIcons.Pin, "사고 장소", address, "참고용 주소예요 · $OSM_CREDIT")
+                        } ?: InfoRow(
                             PitCrewIcons.Pin,
                             "사고 장소",
-                            listOfNotNull("사고 장소를 말로 설명하세요. 도로 이름이나 이정표를 말하면 좋아요.", locationStateText(session)).joinToString("\n")
+                            listOfNotNull("사고 장소를 말로 설명하세요. 도로 이름이나 이정표를 말하면 좋아요.", placeStatusText(session)).joinToString("\n")
                         ),
                         InfoRow(PitCrewIcons.Person, "다친 사람", injuryText)
                     )

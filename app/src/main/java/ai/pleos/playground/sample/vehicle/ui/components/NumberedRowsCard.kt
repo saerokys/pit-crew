@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /** [NumberedRowsCard]의 한 행: 번호, 라벨, 값 여러 줄. */
-data class NumberedRow(val label: String, val lines: List<String>)
+data class NumberedRow(val label: String, val lines: List<String>, val note: String? = null)
 
 /**
  * 번호 행 카드(예: SC-260 "보험사에 말할 순서"). 번호 원은 accent 테두리, 라벨 28, 값은 36 Bold로 줄마다 보여 준다.
@@ -59,6 +59,7 @@ fun NumberedRowsCard(rows: List<NumberedRow>, modifier: Modifier = Modifier) {
                         row.lines.forEach { line ->
                             Text(line, style = PitCrewTheme.typography.cardTitle, color = colors.textPrimary)
                         }
+                        if (row.note != null) Text(row.note, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
                     }
                 }
                 if (index < rows.lastIndex) {

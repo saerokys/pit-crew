@@ -16,6 +16,9 @@ import ai.pleos.playground.sample.vehicle.ui.data.AppPage
 import ai.pleos.playground.sample.vehicle.ui.data.ApiExplorerPane
 import ai.pleos.playground.sample.vehicle.ui.data.FeatureRequestFlow
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
+import ai.pleos.playground.sample.vehicle.address.AddressResolver
+import ai.pleos.playground.sample.vehicle.address.AddressResult
+import ai.pleos.playground.sample.vehicle.address.AddressStatus
 import ai.pleos.playground.sample.vehicle.location.LocationReader
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.location.isLocationSupported
@@ -215,13 +218,14 @@ class MainViewModel(application: Application) :
             else it.copy(
                 accidentSession = AccidentSession(
                     startedAtMillis = System.currentTimeMillis(),
-                    locationRequested = it.consent.location
+                    locationRequested = it.consent.location,
+                    addressRequested = it.consent.location && it.consent.network
                 )
             )
         }
         // 위치는 SC-205에서 허용한 경우에만, 사고 모드 시작 때 한 번만 읽는다(꺼져 있으면 FusedLocation을 부르지 않는다).
         val session = _uiState.value.accidentSession
-        if (session != null && session.locationRequested && session.locationResult == null && locationJob?.isActive != true) {
+        if (session != null && session.locationRequested && session.locationStatus == null && locationJob?.isActive != true) {
             readLocationOnce(session.startedAtMillis)
         }
         // SC-200 [네, 세웠어요]에서 차량 상태를 한 번 읽는다. 기다리지 않고 SC-210으로 가며, 실패해도 진행한다.
@@ -261,27 +265,42 @@ class MainViewModel(application: Application) :
         }
     }
 
+    /**
+     * 사고 모드 시작 때 위치를 1회 읽고, 네트워크도 허용했으면 주소를 1회 조회한다(재시도 없음).
+     * 좌표는 이 함수 안에서 주소 조회에만 쓰고 세션, 로그, 화면에 남기지 않는다. 세션에는 상태와 주소 문자열만 둔다.
+     */
     private fun readLocationOnce(startedAt: Long) {
         locationJob = viewModelScope.launch {
             try {
                 val result = LocationReader(getApplication()).readOnce()
-                // 좌표는 로그에 남기지 않는다. 결과 종류만 남긴다.
-                Log.i(TAG, "SC-200 location: ${result.status.name}" + (result.errorText?.let { " ($it)" } ?: ""))
-                _uiState.update { state ->
-                    val session = state.accidentSession
-                    if (session == null || session.startedAtMillis != startedAt) state
-                    else state.copy(accidentSession = session.withLocation(result))
+                // 로그에는 결과 종류만 남긴다(좌표, 오류 메시지 제외).
+                Log.i(TAG, "SC-200 location: ${result.status.name}")
+                updateSession(startedAt) { it.withLocationStatus(result.status) }
+                val point = result.location
+                val wantAddress = _uiState.value.accidentSession?.addressRequested == true
+                if (result.status == LocationStatus.OK && point != null && wantAddress) {
+                    val address = AddressResolver().resolve(point.latitude, point.longitude)
+                    Log.i(TAG, "SC-200 address: ${address.status.name}")
+                    updateSession(startedAt) { it.withAddress(address) }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "SC-200 location failed: ${e.javaClass.simpleName}")
-                _uiState.update { state ->
-                    val session = state.accidentSession
-                    if (session == null || session.startedAtMillis != startedAt) state
-                    else state.copy(accidentSession = session.withLocation(ai.pleos.playground.sample.vehicle.location.LocationResult(LocationStatus.ERROR)))
+                updateSession(startedAt) { session ->
+                    if (session.locationStatus == null) session.withLocationStatus(LocationStatus.ERROR)
+                    else session.withAddress(AddressResult(AddressStatus.ERROR))
                 }
             }
+        }
+    }
+
+    /** 시작 시각이 같은 세션일 때만 바꾼다(세션이 끝났거나 새로 시작됐으면 결과를 버린다). */
+    private fun updateSession(startedAt: Long, change: (AccidentSession) -> AccidentSession) {
+        _uiState.update { state ->
+            val session = state.accidentSession
+            if (session == null || session.startedAtMillis != startedAt) state
+            else state.copy(accidentSession = change(session))
         }
     }
 

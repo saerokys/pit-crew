@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 /** [InfoRowsCard]의 한 행: 아이콘, 작은 라벨, 굵은 값. */
-data class InfoRow(val icon: ImageVector, val label: String, val value: String)
+data class InfoRow(val icon: ImageVector, val label: String, val value: String, val note: String? = null)
 
 /** 제목과 행 목록을 구분선으로 나눠 보여 주는 카드(예: SC-221 "말할 내용"). */
 @Composable
@@ -47,6 +47,7 @@ fun InfoRowsCard(
                 Column {
                     Text(row.label, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
                     Text(row.value, style = PitCrewTheme.typography.cardTitle, color = colors.textPrimary)
+                    if (row.note != null) Text(row.note, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
                 }
             }
             if (index < rows.lastIndex) Divider()
