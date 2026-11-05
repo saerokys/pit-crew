@@ -160,6 +160,52 @@ object PitCrewIcons {
         }
     }
 
+    /** 119 전화 안내 */
+    val Phone: ImageVector by lazy {
+        icon("Phone") {
+            moveTo(6.5f, 3.5f); lineTo(9.5f, 3.5f); lineTo(11f, 7.5f); lineTo(9f, 9f)
+            curveTo(10f, 11.2f, 11.8f, 13f, 14f, 14f)
+            lineTo(15.5f, 12f); lineTo(19.5f, 13.5f); lineTo(19.5f, 16.5f)
+            curveTo(19.5f, 17.6f, 18.6f, 18.5f, 17.5f, 18.5f)
+            curveTo(9.5f, 18.5f, 3.5f, 12.5f, 3.5f, 6.5f)
+            curveTo(3.5f, 4.6f, 4.9f, 3.5f, 6.5f, 3.5f)
+            close()
+        }
+    }
+
+    /** 사고 장소 */
+    val Pin: ImageVector by lazy {
+        icon("Pin") {
+            moveTo(12f, 21f)
+            curveTo(12f, 21f, 5f, 14.8f, 5f, 9.5f)
+            arcToRelative(7f, 7f, 0f, false, true, 14f, 0f)
+            curveTo(19f, 14.8f, 12f, 21f, 12f, 21f)
+            close()
+            circle(12f, 9.5f, 2.5f)
+        }
+    }
+
+    /** 다친 사람 */
+    val Person: ImageVector by lazy {
+        icon("Person") {
+            circle(12f, 8f, 4f)
+            moveTo(4.5f, 20.5f)
+            curveTo(4.5f, 16.5f, 8f, 14.5f, 12f, 14.5f)
+            curveTo(16f, 14.5f, 19.5f, 16.5f, 19.5f, 20.5f)
+        }
+    }
+
+    /** 긴급 배너 */
+    val AlertOctagon: ImageVector by lazy {
+        icon("AlertOctagon") {
+            moveTo(8.5f, 2.5f); lineTo(15.5f, 2.5f); lineTo(21.5f, 8.5f); lineTo(21.5f, 15.5f)
+            lineTo(15.5f, 21.5f); lineTo(8.5f, 21.5f); lineTo(2.5f, 15.5f); lineTo(2.5f, 8.5f)
+            close()
+            moveTo(12f, 7.5f); lineTo(12f, 13f)
+            moveTo(12f, 16.4f); lineTo(12f, 16.5f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {

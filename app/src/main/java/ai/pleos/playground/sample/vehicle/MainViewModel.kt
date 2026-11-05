@@ -17,6 +17,7 @@ import ai.pleos.playground.sample.vehicle.ui.data.ApiExplorerPane
 import ai.pleos.playground.sample.vehicle.ui.data.FeatureRequestFlow
 import ai.pleos.playground.sample.vehicle.ui.data.MainUiState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
 import ai.pleos.playground.sample.vehicle.ui.data.withFeatureResult
@@ -107,6 +108,13 @@ class MainViewModel(application: Application) :
         _uiState.update { state ->
             val session = state.accidentSession ?: return@update state
             state.copy(accidentSession = session.withChecked(id, checked))
+        }
+    }
+
+    fun setInjuryAnswer(answer: InjuryAnswer) {
+        _uiState.update { state ->
+            val session = state.accidentSession ?: return@update state
+            state.copy(accidentSession = session.withInjury(answer))
         }
     }
 

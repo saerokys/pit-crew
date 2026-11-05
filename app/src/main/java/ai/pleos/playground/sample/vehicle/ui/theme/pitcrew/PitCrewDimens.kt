@@ -47,6 +47,11 @@ object PitCrewDimens {
     val infoIconSize = 56.dp
     val topBarButtonMinWidth = 248.dp
     val captionRowHeight = 76.dp
+    // SC-220, SC-221 시안에서 읽은 값
+    val choiceTileHeight = 458.dp
+    val choiceTileBorder = 4.dp
+    val emergencyBannerHeight = 128.dp
+    val emergencyCardWidth = 640.dp
 }
 
 object PitCrewShapes {

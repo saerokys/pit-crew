@@ -12,10 +12,21 @@ import java.util.Locale
 data class AccidentSession(
     val startedAtMillis: Long,
     /** 항목 id -> 체크 여부. 값이 없으면 "확인 안 함". */
-    val checks: Map<String, Boolean> = emptyMap()
+    val checks: Map<String, Boolean> = emptyMap(),
+    /** SC-220 부상 응답. 선택하지 않고 나가면 "응답 안 함". */
+    val injury: InjuryAnswer = InjuryAnswer.NOT_ANSWERED
 ) {
     fun isChecked(id: String): Boolean = checks[id] == true
     fun withChecked(id: String, checked: Boolean): AccidentSession = copy(checks = checks + (id to checked))
+    fun withInjury(answer: InjuryAnswer): AccidentSession = copy(injury = answer)
+}
+
+/** SPEC 1.2의 부상 응답: 없음 / 있음 / 모름 / 응답 안 함. */
+enum class InjuryAnswer(val label: String) {
+    NONE("없음"),
+    YES("있음"),
+    UNSURE("모름"),
+    NOT_ANSWERED("응답 안 함")
 }
 
 /** 체크 항목 하나. id는 세션과 SC-260 요약이 같이 쓴다. */

@@ -1,6 +1,9 @@
 package ai.pleos.playground.sample.vehicle.ui.nav
 
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
+import ai.pleos.playground.sample.vehicle.ui.accident.EmergencyScreen
+import ai.pleos.playground.sample.vehicle.ui.accident.InjuryScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.SafetyCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.StopCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.components.DialogButton
@@ -91,6 +94,7 @@ fun PitCrewNavHost(
     session: AccidentSession?,
     onStartSession: () -> Unit,
     onSetChecked: (String, Boolean) -> Unit,
+    onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
     modifier: Modifier = Modifier,
     topBarTrailing: (@Composable () -> Unit)? = null
@@ -110,7 +114,20 @@ fun PitCrewNavHost(
 
     // [이전]과 시스템 뒤로 가기는 같다. 세션이 있는 채로 SC-200에서 나가면 확인 대화상자를 먼저 보여 준다.
     fun goBack() {
-        if (route == PitCrewRoute.STOP_CHECK && session != null) showExitDialog = true else navigator.pop()
+        when {
+            route == PitCrewRoute.STOP_CHECK && session != null -> showExitDialog = true
+            route == PitCrewRoute.INJURY -> {
+                // SC-220에서 [이전]으로 나가면 부상 응답은 "응답 안 함"으로 둔다(SPEC).
+                onSetInjury(InjuryAnswer.NOT_ANSWERED)
+                navigator.pop()
+            }
+            route == PitCrewRoute.RECORD -> {
+                // SC-230에서 [이전]은 SC-221을 거쳐 왔더라도 SC-220으로 간다(SPEC 1.3).
+                navigator.pop()
+                if (navigator.current == PitCrewRoute.EMERGENCY) navigator.pop()
+            }
+            else -> navigator.pop()
+        }
     }
     // SC-000에서는 뒤로 가기를 무시한다. 홈에서는 시스템 기본(앱 종료).
     BackHandler(enabled = route == PitCrewRoute.STARTUP || navigator.canPop) {
@@ -156,6 +173,16 @@ fun PitCrewNavHost(
                     onCheckedChange = onSetChecked,
                     onExitRequest = { showExitDialog = true }
                 )
+                PitCrewRoute.INJURY -> InjuryScreen(
+                    session = session,
+                    onAnswer = { answer ->
+                        onSetInjury(answer)
+                        // 없어요는 SC-230으로, 있어요/잘 모르겠어요는 SC-221을 거쳐 SC-230으로 간다.
+                        navigator.push(if (answer == InjuryAnswer.NONE) PitCrewRoute.RECORD else PitCrewRoute.EMERGENCY)
+                    },
+                    onExitRequest = { showExitDialog = true }
+                )
+                PitCrewRoute.EMERGENCY -> EmergencyScreen(session = session)
                 else -> PlaceholderScreen(route, onHome = { navigator.replaceWithHome() })
             }
         }
@@ -163,13 +190,21 @@ fun PitCrewNavHost(
             PitCrewBottomBar(
                 onPrevious = { goBack() },
                 // SC-200은 두 선택 버튼으로만 이동한다. 그 밖의 [다음]은 체크와 관계없이 항상 눌린다.
-                onNext = if (route == PitCrewRoute.STOP_CHECK) null else {
-                    {
-                        val next = navigator.next()
-                        if (next != null) navigator.push(next) else navigator.replaceWithHome()
+                onNext = when (route) {
+                    PitCrewRoute.STOP_CHECK, PitCrewRoute.INJURY -> null // 선택 버튼으로만 이동
+                    PitCrewRoute.EMERGENCY -> { { navigator.push(PitCrewRoute.RECORD) } }
+                    else -> {
+                        {
+                            val next = navigator.next()
+                            if (next != null) navigator.push(next) else navigator.replaceWithHome()
+                        }
                     }
                 },
-                nextLabel = if (navigator.next() == null) "마치기" else "다음"
+                nextLabel = when {
+                    route == PitCrewRoute.EMERGENCY -> "확인했어요"
+                    navigator.next() == null -> "마치기"
+                    else -> "다음"
+                }
             )
         }
     }

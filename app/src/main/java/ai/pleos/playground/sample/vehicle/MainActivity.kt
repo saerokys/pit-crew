@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     onShowDevPage = viewModel::showDevPage,
                     onStartSession = viewModel::startAccidentSession,
                     onSetChecked = viewModel::setChecked,
+                    onSetInjury = viewModel::setInjuryAnswer,
                     onEndSession = viewModel::endAccidentSession,
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,

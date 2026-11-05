@@ -46,7 +46,7 @@
 | title | 화면 제목 | 40 | Bold |
 | body | 본문 | 32 | Regular |
 | caption | 보조 설명 | 28 | Regular |
-| titleUrgent | SC-221(긴급 안내) 제목 | 56 이상 | Bold |
+| titleUrgent | SC-221(긴급 안내) 제목 | 56 이상 (SC-221 실제 사용 값 72) | Bold |
 | button | 버튼 글자 | 36 | Bold |
 | badge | 상태 배지 글자 | 28 | Bold |
 
@@ -103,6 +103,17 @@
 | 설명 카드 | 너비 약 460, 안쪽 여백 32, 아이콘 56, 제목 36 Bold, 본문 32 Regular |
 | 상단 바 [소리로 듣기] | 너비 약 248 × 높이 96, accent 테두리 2, 글자 28 Bold. 비활성은 점선 테두리와 textDisabled |
 | 단계 화면 여백 | 상단 바 아래 40, 하단 바 위 32, 열 간격 32 |
+
+### 부상 확인·긴급 안내(SC-220, SC-221)에서 읽은 값 (2026-11-05, 시안 픽셀 측정)
+
+> 예외(2026-11-05, 사용자 결정): SC-220 선택 타일 글자 48 Bold와 타일 높이 458은 tokens의 다른 값에 없고 실제 화면 시안(SC-220)을 따랐다. SC-221 배너 글자 72 Bold는 titleUrgent("56 이상") 범위 안이라 예외가 아니며 실제 사용 값으로만 기록한다.
+
+| 항목 | 값 |
+|---|---|
+| 선택 타일(SC-220) | 높이 458, 간격 24(시안 약 26), 테두리 4(없어요 statusOk, 있어요 statusUrgentText, 잘 모르겠어요 statusWarn), 아이콘 104, 글자 48 Bold, 선택됨은 surfaceSelected 배경과 "✓ 선택됨" |
+| 긴급 배너(SC-221) | 전체 폭, 높이 128, 배경 statusUrgent, 아이콘 64, 글자 72 Bold 흰색(titleUrgent 실제 값) |
+| SC-221 큰 본문 | 80 Bold, 전화 아이콘 120(statusUrgentText) |
+| "말할 내용" 카드 | 너비 640, 안쪽 여백 32, 제목 40 Bold, 행: 아이콘 48(statusUrgentText) + 라벨 28 + 값 36 Bold, 구분선 divider 2 |
 
 ## 5. 컴포넌트별 색·상태
 

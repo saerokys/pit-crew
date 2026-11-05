@@ -3,6 +3,7 @@ package ai.pleos.playground.sample.vehicle.ui.screen
 import ai.pleos.playground.sample.vehicle.BuildConfig
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import androidx.activity.compose.BackHandler
+import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.data.AppPage
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
@@ -50,6 +51,7 @@ fun SampleApp(
     onShowDevPage: (AppPage) -> Unit,
     onStartSession: () -> Unit,
     onSetChecked: (String, Boolean) -> Unit,
+    onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
     onShowHome: () -> Unit
 ) {
@@ -106,6 +108,7 @@ fun SampleApp(
                     session = uiState.accidentSession,
                     onStartSession = onStartSession,
                     onSetChecked = onSetChecked,
+                    onSetInjury = onSetInjury,
                     onEndSession = onEndSession,
                     // 개발자 도구 진입점: 디버그 빌드에서만 상단 바 오른쪽에 둔다(Phase 14에서 제거).
                     topBarTrailing = if (devToolsEnabled) {
