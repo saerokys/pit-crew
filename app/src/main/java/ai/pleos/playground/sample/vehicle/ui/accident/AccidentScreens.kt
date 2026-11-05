@@ -140,14 +140,14 @@ fun SafetyCheckScreen(
 ) {
     AccidentStepScaffold(
         currentStep = 2,
-        title = "먼저 안전을 확보하세요",
+        title = AccidentTexts.SAFETY_TITLE,
         onExitRequest = onExitRequest,
         modifier = modifier,
         right = {
             InfoCard(
-                title = "왜 필요한가요?",
-                body = "비상등은 뒤따르는 차에 사고를 알려 줘요. 도로 위에 머물면 2차 사고 위험이 커서, 안전한 곳으로 피해야 해요.",
-                note = "참고용 안내이며 법률·의료 조언이 아니에요."
+                title = AccidentTexts.SAFETY_WHY_TITLE,
+                body = AccidentTexts.SAFETY_WHY_BODY,
+                note = AccidentTexts.DISCLAIMER
             )
         }
     ) {

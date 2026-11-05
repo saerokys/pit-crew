@@ -58,6 +58,9 @@ fun SampleApp(
     onRecheckLink: () -> Unit,
     onConfirmConsent: (Boolean, Boolean, Boolean) -> Unit,
     onResetConsent: () -> Unit,
+    onToggleSpeech: (String) -> Unit,
+    onStopSpeech: () -> Unit,
+    onReleaseSpeech: () -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -124,6 +127,10 @@ fun SampleApp(
                     consent = uiState.consent,
                     locationSupported = uiState.locationSupported,
                     onConfirmConsent = onConfirmConsent,
+                    speechState = uiState.speechState,
+                    onToggleSpeech = onToggleSpeech,
+                    onStopSpeech = onStopSpeech,
+                    onReleaseSpeech = onReleaseSpeech,
                     featureSupport = uiState.featureSupport,
                     linkCheckedAtMillis = uiState.linkCheckedAtMillis,
                     isCheckingLink = uiState.isCheckingLink,

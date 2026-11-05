@@ -23,6 +23,12 @@ SDK 버전: TextToSpeech SDK v3.3.1
 ```
 - 초기화, 이벤트 리스너 등록, 앱 등록, 합성 요청에 필요하다. 없으면 초기화나 호출이 실패할 수 있고, 오류 콜백에 `PERMISSION_DENIED`가 온다(먼저 매니페스트 확인).
 
+## 소스로 확인한 내용 (3.3.1, 2026-11-05, AAR를 javap로 읽음)
+- Nexus에 3.3.1이 있다(소스·javadoc jar는 없음). 의존 라이브러리: core-ktx 1.8.0, coroutines-android 1.6.3, gson 2.10.1, universal-access 0.6.0.
+- 권한 `pleos.car.permission.TTS_SERVICE`는 protectionLevel=normal(차량 권한이 아닌 일반 권한). 권한이 없으면 `SecurityException`("Permission … is required")을 동기로 던지는 코드가 있다(문서는 오류 콜백 `PERMISSION_DENIED`라고 함).
+- 에뮬레이터 확인(ON_DEVICE): **`initialize()` 뒤에 `addEventListener()`를 불러야 한다**(먼저 부르면 `UninitializedPropertyAccessException`). `initialize` 성공 콜백은 약 5~11ms. `speak()`는 성공 콜백 전에 불러도 동작하지만 앱은 성공 뒤에 부른다. `onReady()`는 발화 요청마다 온다. `isFinal=false`로 나눠 보내도 한 발화로 합쳐져 `onStart`/`onDone`이 한 번씩 오므로 한 번에 읽는다. 말하는 중 `speak()`를 한 번 더 부르면 첫 발화가 `onDone` 없이 끝나지 않는다.
+- 소리와 한국어 발음은 출력장치가 없어 확인하지 못했다(이벤트와 `dumpsys audio`의 AudioTrack started, `onUpdatedRms`로만 확인).
+
 ## 사용 흐름
 1. 인스턴스 생성: `TextToSpeech(applicationContext, Mode.ON_DEVICE)` (패키지 `ai.pleos.playground.tts.TextToSpeech`)
 2. `initialize()` — 결과가 필요하면 `OnInitializeListener`(`onSuccess()`, `onFailure(errorType)`) 전달

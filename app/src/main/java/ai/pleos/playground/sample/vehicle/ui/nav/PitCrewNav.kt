@@ -12,7 +12,9 @@ import ai.pleos.playground.sample.vehicle.ui.components.DialogButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewBottomBar
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewDialog
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewIcons
-import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
+import ai.pleos.playground.sample.vehicle.ui.components.SpeechButton
+import ai.pleos.playground.sample.vehicle.tts.SpeechState
+import ai.pleos.playground.sample.vehicle.tts.SpeechTexts
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.settings.Consent
@@ -122,6 +124,10 @@ fun PitCrewNavHost(
     consent: Consent,
     locationSupported: Boolean,
     onConfirmConsent: (location: Boolean, voice: Boolean, network: Boolean) -> Unit,
+    speechState: SpeechState,
+    onToggleSpeech: (String) -> Unit,
+    onStopSpeech: () -> Unit,
+    onReleaseSpeech: () -> Unit,
     featureSupport: Map<VehicleFeature, SupportState>,
     linkCheckedAtMillis: Long?,
     isCheckingLink: Boolean,
@@ -137,6 +143,12 @@ fun PitCrewNavHost(
     var showExitDialog by remember { mutableStateOf(false) }
     var showNotYetDialog by remember { mutableStateOf(false) }
     var consentChoice by remember { mutableStateOf(ConsentChoice(false, false, false)) }
+
+    // 화면이 바뀌면 읽기를 멈추고, 홈에 도착하면(사고 모드 끝) TTS를 해제한다.
+    LaunchedEffect(route) {
+        onStopSpeech()
+        if (route == PitCrewRoute.HOME) onReleaseSpeech()
+    }
 
     // 홈에 도착하면(나가기, 아직이에요, 마치기, 이전) 사고 모드 세션 데이터를 버린다.
     LaunchedEffect(route, session != null) {
@@ -168,11 +180,12 @@ fun PitCrewNavHost(
     Column(modifier = modifier.fillMaxSize().background(PitCrewTheme.colors.background)) {
         val showSubtitle = route == PitCrewRoute.STARTUP || route == PitCrewRoute.HOME
         val step = route.step
+        val speechText = if (route in SpeechTexts.speechRoutes) SpeechTexts.forRoute(route, session) else null
         val trailing: (@Composable () -> Unit)? = when {
             showSubtitle -> topBarTrailing // 개발자 도구 버튼(디버그 빌드, 홈에서만)
-            step != null && step >= 2 || route == PitCrewRoute.PRE_DEPARTURE || route == PitCrewRoute.CONSENT -> {
-                // [소리로 듣기]는 Phase 9 전까지 회색 비활성
-                { TopBarButton(text = "소리로 듣기", icon = PitCrewIcons.SpeakerOn, onClick = {}, enabled = false) }
+            speechText != null -> {
+                // [소리로 듣기]는 SC-210, 220, 221, 230, 240에서만 보인다(그 밖의 화면에서는 숨긴다).
+                { SpeechButton(state = speechState, voiceOn = consent.voice, onClick = { onToggleSpeech(speechText) }) }
             }
             else -> null
         }

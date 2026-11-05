@@ -173,6 +173,13 @@ object PitCrewIcons {
         }
     }
 
+    /** 멈추기([소리로 듣기] 재생 중) */
+    val Stop: ImageVector by lazy {
+        icon("Stop") {
+            moveTo(7f, 7f); lineTo(17f, 7f); lineTo(17f, 17f); lineTo(7f, 17f); close()
+        }
+    }
+
     /** 네트워크(SC-205) */
     val Wifi: ImageVector by lazy {
         icon("Wifi") {

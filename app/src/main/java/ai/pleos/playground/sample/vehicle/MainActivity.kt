@@ -13,6 +13,12 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    override fun onStop() {
+        // 앱이 화면에서 사라지면 읽기를 멈춘다.
+        viewModel.stopSpeech()
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,6 +39,9 @@ class MainActivity : ComponentActivity() {
                     onRecheckLink = viewModel::recheckVehicleLink,
                     onConfirmConsent = viewModel::confirmConsent,
                     onResetConsent = viewModel::resetConsent,
+                    onToggleSpeech = viewModel::toggleSpeech,
+                    onStopSpeech = viewModel::stopSpeech,
+                    onReleaseSpeech = { viewModel.releaseSpeech() },
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

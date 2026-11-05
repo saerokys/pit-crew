@@ -49,7 +49,7 @@ fun InjuryScreen(
     val current = session?.injury ?: InjuryAnswer.NOT_ANSWERED
     AccidentStepScaffold(
         currentStep = 3,
-        title = "다친 사람이 있나요?",
+        title = AccidentTexts.INJURY_TITLE,
         onExitRequest = onExitRequest,
         modifier = modifier
     ) {
@@ -90,7 +90,7 @@ fun InjuryScreen(
             Icon(PitCrewIcons.Phone, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(PitCrewDimens.iconSize))
             Spacer(Modifier.width(16.dp))
             Text(
-                "있거나 모르겠으면 119 안내를 먼저 보여 드려요",
+                AccidentTexts.INJURY_HINT,
                 style = PitCrewTheme.typography.caption,
                 color = colors.textSecondary
             )
@@ -105,12 +105,9 @@ fun InjuryScreen(
 @Composable
 fun EmergencyScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
     val colors = PitCrewTheme.colors
-    val injuryText = when (session?.injury) {
-        InjuryAnswer.YES -> "있음. 몇 명인지, 어떤 상태인지 말해 주세요."
-        else -> "모름. 보이는 대로 말해 주세요."
-    }
+    val injuryText = AccidentTexts.injurySpeakValue(session?.injury)
     Column(modifier = modifier.fillMaxSize()) {
-        EmergencyBanner(text = "119에 먼저 연락하세요")
+        EmergencyBanner(text = AccidentTexts.EMERGENCY_BANNER)
         Row(
             modifier = Modifier
                 .weight(1f)
@@ -129,18 +126,18 @@ fun EmergencyScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
             ) {
                 Icon(PitCrewIcons.Phone, contentDescription = null, tint = colors.statusUrgentText, modifier = Modifier.size(PitCrewDimens.heroIconSize))
                 Spacer(Modifier.height(PitCrewDimens.touchGap))
-                Text("전화로 119를 눌러 주세요", style = PitCrewTheme.typography.heroTitle, color = colors.textPrimary)
+                Text(AccidentTexts.EMERGENCY_CALL, style = PitCrewTheme.typography.heroTitle, color = colors.textPrimary)
                 Spacer(Modifier.height(PitCrewDimens.touchGap))
                 Text(
-                    "이 앱은 전화를 대신 걸지 않아요. 직접 걸어 주세요.",
+                    AccidentTexts.EMERGENCY_NO_DIAL,
                     style = PitCrewTheme.typography.caption,
                     color = colors.textSecondary
                 )
                 Spacer(Modifier.height(16.dp))
-                Text("경찰 신고는 112예요.", style = PitCrewTheme.typography.body, color = colors.textPrimary)
+                Text(AccidentTexts.EMERGENCY_POLICE, style = PitCrewTheme.typography.body, color = colors.textPrimary)
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    "참고용 안내이며 법률·의료 조언이 아니에요.",
+                    AccidentTexts.DISCLAIMER,
                     style = PitCrewTheme.typography.caption,
                     color = colors.textSecondary
                 )
@@ -150,11 +147,11 @@ fun EmergencyScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 InfoRowsCard(
-                    title = "말할 내용",
+                    title = AccidentTexts.SPEAK_CARD_TITLE,
                     iconTint = colors.statusUrgentText,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     rows = listOf(
-                        InfoRow(PitCrewIcons.Car, "사고 종류", "교통사고라고 말해요"),
+                        InfoRow(PitCrewIcons.Car, AccidentTexts.SPEAK_KIND_LABEL, AccidentTexts.SPEAK_KIND_VALUE),
                         // 주소가 있을 때만 "말로 설명하세요" 문장을 주소로 바꾼다. 없으면 기존 문장에 상태 한 줄만 덧붙인다.
                         addressText(session)?.let { address ->
                             InfoRow(PitCrewIcons.Pin, "사고 장소", address, "참고용 주소예요 · $OSM_CREDIT")
@@ -163,7 +160,7 @@ fun EmergencyScreen(session: AccidentSession?, modifier: Modifier = Modifier) {
                             "사고 장소",
                             listOfNotNull("사고 장소를 말로 설명하세요. 도로 이름이나 이정표를 말하면 좋아요.", placeStatusText(session)).joinToString("\n")
                         ),
-                        InfoRow(PitCrewIcons.Person, "다친 사람", injuryText)
+                        InfoRow(PitCrewIcons.Person, AccidentTexts.SPEAK_INJURY_LABEL, injuryText)
                     )
                 )
             }

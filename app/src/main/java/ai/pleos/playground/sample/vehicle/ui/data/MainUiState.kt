@@ -8,6 +8,7 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
+import ai.pleos.playground.sample.vehicle.tts.SpeechState
 import ai.pleos.playground.sample.vehicle.vehicle.CapabilityAreas
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
@@ -39,6 +40,8 @@ data class MainUiState(
     /** capability 응답에서 확인된 영역(문, 창문). SC-250이 이 영역만 읽는다. */
     val capabilityAreas: CapabilityAreas = CapabilityAreas(),
     val isReadingVehicle: Boolean = false,
+    /** [소리로 듣기] 버튼 상태(음성 스위치를 켜고 버튼을 눌렀을 때만 바뀐다). */
+    val speechState: SpeechState = SpeechState.IDLE,
     /** SC-205 동의 상태(앱을 껐다 켜도 유지, 값은 스위치 3개뿐). */
     val consent: Consent = Consent(),
     /** 이 차량에 위치 서비스가 있는지(isSupported). 없으면 SC-205 위치 스위치가 회색이다. */

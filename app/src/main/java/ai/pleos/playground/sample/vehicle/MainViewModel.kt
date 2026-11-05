@@ -25,6 +25,8 @@ import ai.pleos.playground.sample.vehicle.location.isLocationSupported
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.settings.ConsentStore
+import ai.pleos.playground.sample.vehicle.tts.SpeechPlayer
+import ai.pleos.playground.sample.vehicle.tts.SpeechState
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
@@ -74,6 +76,10 @@ class MainViewModel(application: Application) :
     private var preCheckJob: Job? = null
     private var locationJob: Job? = null
     private val consentStore = ConsentStore(application)
+    // TextToSpeech는 음성 스위치를 켜고 [소리로 듣기]를 처음 누를 때 만들어진다(여기서는 SDK를 부르지 않는다).
+    private val speechPlayer by lazy {
+        SpeechPlayer(getApplication()) { state -> _uiState.update { it.copy(speechState = state) } }
+    }
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -98,6 +104,43 @@ class MainViewModel(application: Application) :
     fun resetConsent() {
         consentStore.clear()
         _uiState.update { it.copy(consent = Consent()) }
+        releaseSpeech(forgetUnavailable = true)
+    }
+
+    /**
+     * [소리로 듣기]: 읽는 중이면 멈추고, 아니면 [text]를 한 번에 읽는다. 음성 스위치가 꺼져 있으면 SDK를 부르지 않는다.
+     * [text]는 화면에 있는 문구를 이은 문장이며 로그에 남기지 않는다.
+     */
+    fun toggleSpeech(text: String) {
+        if (!_uiState.value.consent.voice) return
+        try {
+            when (_uiState.value.speechState) {
+                SpeechState.PREPARING, SpeechState.SPEAKING -> speechPlayer.stop()
+                else -> speechPlayer.speak(text)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "speech toggle failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /** 화면을 옮기거나 앱이 화면에서 사라질 때: 읽기를 멈추고 "소리 안내 불가"(재생 오류)를 푼다. */
+    fun stopSpeech() {
+        if (_uiState.value.speechState == SpeechState.IDLE) return
+        try {
+            speechPlayer.stop()
+            speechPlayer.clearScreenError()
+        } catch (e: Exception) {
+            Log.w(TAG, "speech stop failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /** 사고 모드를 끝내고 홈에 도착했을 때, 동의 초기화 때, 뷰모델 정리 때 TTS를 해제한다. */
+    fun releaseSpeech(forgetUnavailable: Boolean = false) {
+        try {
+            speechPlayer.release(forgetUnavailable)
+        } catch (e: Exception) {
+            Log.w(TAG, "speech release failed: ${e.javaClass.simpleName}")
+        }
     }
 
     /**
@@ -769,6 +812,7 @@ class MainViewModel(application: Application) :
 
     override fun onCleared() {
         Log.i(TAG, "onCleared: releasing Vehicle SDK")
+        runCatching { speechPlayer.release() }
         runCatching { explorerInstance?.release() }
         runCatching { vehicleClient.release() }
         Log.i(TAG, "onCleared: Vehicle SDK release requested")

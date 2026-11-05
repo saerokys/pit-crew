@@ -104,7 +104,7 @@ fun ConsentScreen(
             PitCrewSwitchRow(
                 icon = PitCrewIcons.Mic,
                 title = "음성",
-                description = "말로 메모를 남겨요",
+                description = "소리로 듣고 말로 메모를 남겨요",
                 checked = voice,
                 onCheckedChange = { voice = it; publish() }
             )

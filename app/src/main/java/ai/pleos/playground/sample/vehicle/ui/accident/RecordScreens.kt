@@ -28,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-private const val DISCLAIMER = "참고용 안내이며 법률·의료 조언이 아니에요."
+private const val DISCLAIMER = AccidentTexts.DISCLAIMER
 
 /** 체크 항목 목록(아래쪽 정렬, 넘치면 스크롤). 체크는 세션에 저장되어 [이전]으로 갔다 와도 유지된다. */
 @Composable
@@ -70,7 +70,7 @@ fun RecordScreen(
     val colors = PitCrewTheme.colors
     AccidentStepScaffold(
         currentStep = 4,
-        title = "현장을 기록해 두세요",
+        title = AccidentTexts.RECORD_TITLE,
         onExitRequest = onExitRequest,
         modifier = modifier,
         right = {
@@ -79,8 +79,8 @@ fun RecordScreen(
             Text(DISCLAIMER, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
         }
     ) {
-        Text("휴대폰으로 촬영해 두세요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
-        Text("나중에 보험사에 보여 줄 수 있어요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+        Text(AccidentTexts.RECORD_HINT_PHONE, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+        Text(AccidentTexts.RECORD_HINT_LATER, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
         Checklist(
             items = RecordChecklist.items,
             session = session,
@@ -94,7 +94,7 @@ fun RecordScreen(
         ) {
             Icon(PitCrewIcons.Camera, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(PitCrewDimens.iconSize))
             Spacer(Modifier.width(16.dp))
-            Text("사진은 앱에 저장되지 않아요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+            Text(AccidentTexts.RECORD_NOT_SAVED, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
         }
     }
 }
@@ -112,13 +112,13 @@ fun OtherPartyScreen(
 ) {
     AccidentStepScaffold(
         currentStep = 5,
-        title = "상대방 정보를 확인하세요",
+        title = AccidentTexts.OTHER_TITLE,
         onExitRequest = onExitRequest,
         modifier = modifier,
         right = {
             InfoCard(
-                title = "알아 두세요",
-                body = "이 앱은 상대방 정보를 입력받거나 저장하지 않아요. 확인한 것만 체크해 두세요.",
+                title = AccidentTexts.OTHER_NOTE_TITLE,
+                body = AccidentTexts.OTHER_NOTE_BODY,
                 note = DISCLAIMER,
                 icon = PitCrewIcons.Info
             )
