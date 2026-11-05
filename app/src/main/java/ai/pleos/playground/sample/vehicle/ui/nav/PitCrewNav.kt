@@ -16,6 +16,7 @@ import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
+import ai.pleos.playground.sample.vehicle.ui.vehicle.VehicleStateScreen
 import ai.pleos.playground.sample.vehicle.ui.home.LinkSummary
 import ai.pleos.playground.sample.vehicle.ui.home.StartupScreen
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewDimens
@@ -98,6 +99,8 @@ fun PitCrewNavHost(
     onSetChecked: (String, Boolean) -> Unit,
     onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
+    isReadingVehicle: Boolean,
+    onReadVehicle: () -> Unit,
     modifier: Modifier = Modifier,
     topBarTrailing: (@Composable () -> Unit)? = null
 ) {
@@ -189,6 +192,11 @@ fun PitCrewNavHost(
                     session = session,
                     onCheckedChange = onSetChecked,
                     onExitRequest = { showExitDialog = true }
+                )
+                PitCrewRoute.VEHICLE_STATE -> VehicleStateScreen(
+                    session = session,
+                    isReading = isReadingVehicle,
+                    onReread = onReadVehicle
                 )
                 PitCrewRoute.OTHER_PARTY -> OtherPartyScreen(
                     session = session,

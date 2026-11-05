@@ -59,15 +59,15 @@ SC-100 홈 ─[사고가 났어요]→ (SC-205 최초 1회) → SC-200 → SC-21
 |---|---|---|---|
 | 문 열림 | checkDoorPositionCapabilities → getCurrentDoorPosition | Row 1~3 좌·우, Hood, Rear | 0 닫힘, 1 열림 |
 | 창문 | checkWindowPositionCapabilities → getCurrentWindowPosition | capability 응답으로 확인한 영역만 | 0~10, 10이 열림 |
-| 배터리 | checkEvBatteryStateOfChargeCapabilities → getEvBatteryStateOfCharge | 없음 | 숫자(단위 미확인 → 숫자만 표시) |
-| 주행 거리 | checkCurrentDistanceDrivenCapabilities → getCurrentDistanceDriven | 없음 | 숫자(단위 미확인 → 숫자만 표시) |
+| 배터리 | checkEvBatteryStateOfChargeCapabilities → getEvBatteryStateOfCharge | 없음 | 숫자 + %(SDK 문서 기준, 에뮬레이터 값으로 검증하지 않음) |
+| 주행 거리 | checkCurrentDistanceDrivenCapabilities → getCurrentDistanceDriven | 없음 | 숫자 + km(SDK 문서 기준, 에뮬레이터 값으로 검증하지 않음) |
 | 방향지시등 | checkTurnSignalStateCapabilities → getCurrentTurnSignalState | 없음 | OFF, LEFT 등 |
 
 - 위 이름은 샘플 앱 API 로그에서 확인한 것이다. **실제 Kotlin 시그니처와 권한 이름은 SDK 클래스와 샘플 코드로 확인하고, 추측해서 만들지 않는다.**
 - 순서: 지원 확인 → 읽기 → 예외 처리 → 표시. 지원 확인 없이 읽지 않는다. 예외는 모두 잡아 "확인 불가"로 표시한다.
 - 영역이 있는 기능은 지원되는 영역만 읽는다. 창문은 Row 1 Left만 확인됐으므로 다른 영역은 capability 응답을 본 뒤에만 쓴다.
 - 리스너는 한 번만 등록하고 화면을 떠날 때 해제한다. 읽기 전용이며 set 호출과 CONTROL_* 권한은 쓰지 않는다.
-- 배터리·주행 거리는 단위를 확인하기 전까지 경고 판단을 하지 않는다.
+- 배터리·주행 거리는 %, km를 붙여 보여 주되(SDK 문서 기준) 경고 판단은 하지 않는다.
 
 ### 1.5 SDK 상태 문구 (SC-000, SC-400 공통)
 
@@ -180,7 +180,7 @@ SC-100 홈 ─[사고가 났어요]→ (SC-205 최초 1회) → SC-200 → SC-21
   - (사용자가 허용한 경우에만) 사고 위치(주소) 카드, 날씨 카드. 허용하지 않으면 카드를 보이지 않거나 점선 안내로 둔다
 - 항목 상태: 값 표시 또는 "확인 불가"(미지원 또는 오류)
 - 동작: [다시 읽기]는 5개 기능을 다시 읽고 시각을 갱신한다. 이 화면에 들어올 때 SC-200에서 읽은 값을 보여 주고, 필요하면 다시 읽는다.
-- 규칙: 읽기 전용, 쓰기 호출 없음. 단위가 확인되지 않은 값은 숫자만 표시한다.
+- 규칙: 읽기 전용, 쓰기 호출 없음. 배터리는 %, 주행 거리는 km를 붙여 표시한다(SDK 문서 기준). 경고 판단은 하지 않는다.
 - 확인 방법
   - Virtual Console에서 문을 열고 [다시 읽기]를 누르면 해당 영역이 열림으로 바뀐다.
   - 미지원 항목이 있어도 카드가 표시되고 "확인 불가"가 보인다.
@@ -206,7 +206,7 @@ SC-100 홈 ─[사고가 났어요]→ (SC-205 최초 1회) → SC-200 → SC-21
 - 목적: 매일 쓰는 기능으로 재방문 이유를 만들고, 차량 상태 읽기를 평상시에도 보여 준다.
 - 점검 항목: 문 모두 닫힘(영역별) / 창문 모두 닫힘(영역별, 10이 열림) / 배터리 잔량 / 방향지시등 꺼짐
 - 동작: 화면에 들어오면 읽고 [다시 확인]으로 갱신한다. 결과는 "이상 없음" 또는 "확인 필요 N건"과 항목별 상태 배지로 보여 준다. 읽을 수 없는 항목은 "확인 불가"로 표시하고 **이상으로 세지 않는다.**
-- 배터리: 잔량 값만 보여 주고 경고 판단은 하지 않는다(단위 확인 전).
+- 배터리: 잔량을 %로 보여 주고 경고 판단은 하지 않는다.
 - 확인 방법: Virtual Console에서 문을 열고 [다시 확인]을 누르면 "확인 필요 1건"이 나온다. 문을 닫으면 "이상 없음"으로 돌아간다.
 
 ### SC-400 차량 연동 상태 (Phase 6)

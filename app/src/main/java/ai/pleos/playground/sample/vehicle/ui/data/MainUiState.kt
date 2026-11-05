@@ -7,6 +7,7 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
+import ai.pleos.playground.sample.vehicle.vehicle.CapabilityAreas
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
 
@@ -33,6 +34,9 @@ data class MainUiState(
     /** 사고 모드 세션. 사고 모드 밖(홈)에서는 null. */
     val accidentSession: AccidentSession? = null,
     val featureSupport: Map<VehicleFeature, SupportState> = emptyMap(),
+    /** capability 응답에서 확인된 영역(문, 창문). SC-250이 이 영역만 읽는다. */
+    val capabilityAreas: CapabilityAreas = CapabilityAreas(),
+    val isReadingVehicle: Boolean = false,
     val isSubscribed: Boolean = false,
     val subscribedFeatureId: String? = null,
     val capabilityAccess: String? = null,

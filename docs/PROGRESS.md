@@ -16,9 +16,9 @@
 ## 1. 현재 상태
 
 - 날짜: 2026-11-05
-- 진행 중 Phase: Phase 3 구현 끝(3-c 사용자 확인 대기), 다음은 Phase 4 (SC-250). Phase 0, 1, 2, 3-a, 3-b는 확인·커밋됨
-- 마지막으로 확인된 것: Phase 3-c `clean assembleDebug`, `compileReleaseKotlin` 성공. 에뮬레이터에서 SC-230, SC-240 배치와 이동, 체크 유지 확인. 카메라·사진·저장소 코드와 권한 없음. SC-221 문구는 초안(공식 안내 대조 미완)
-- 다음 할 일: Phase 4 (SC-250 차량 상태 읽기). SC-221 문구를 공식 안내와 대조. SC-200 [네, 세웠어요]에 차량 상태 1회 읽기 연결(Phase 4)
+- 진행 중 Phase: Phase 4 완료(Virtual Console 확인까지 끝, 커밋 전). 다음은 Phase 5 (SC-260)
+- 마지막으로 확인된 것: Phase 4 `clean assembleDebug`, `compileReleaseKotlin` 성공. 에뮬레이터에서 5개 기능 읽기 호출이 모두 동작(문 모두 닫힘, 창문 모두 닫힘, 배터리 100, 주행 거리 0.0, 방향지시등 OFF), [다시 읽기], 읽기 실패 시 "확인 불가" 표시 확인. Virtual Console로 문·창문·Frunk·Trunk 값을 바꿔 [다시 읽기]로 화면이 바뀌는 것까지 사용자가 확인
+- 다음 할 일: Phase 5 (SC-260). SC-221 문구를 공식 안내와 대조. SPEC의 "단위 미확인" 문구 5곳은 2026-11-05 수정 완료(CLAUDE.md는 고칠 곳 없음)
 - 막힌 것: 없음
 
 ## 2. Phase 진행표
@@ -29,7 +29,7 @@
 | 1 | 공통 틀(테마, 상단·하단 바, 배지, 화면 이동) | - | 완료 | 2026-11-05 |
 | 2 | 앱 시작과 홈 | SC-000, SC-100 | 완료 | 2026-11-05 |
 | 3 | 사고 모드 체크리스트 흐름 | SC-200, 210, 220, 221, 230, 240 | 완료 (3-c 사용자 확인 대기) | 2026-11-05 |
-| 4 | 차량 상태 읽기와 기록 | SC-250 | 대기 | |
+| 4 | 차량 상태 읽기와 기록 | SC-250 | 완료 (Virtual Console 확인 끝) | 2026-11-05 |
 | 5 | 접수 요약 | SC-260 | 대기 | |
 | 6 | 출발 전 점검, 연동 상태 | SC-300, SC-400 | 대기 | |
 | 7 | 권한·동의와 위치 | SC-205 | 대기 | |
@@ -54,6 +54,7 @@
 | 앱 영역 | 1682×1210dp, 밀도 160 (Logcat `WINSIZE` 측정값) |
 | 권한 | 읽기 권한 20개(CAR_* 16, READ_* 4), CONTROL_* 없음 |
 | SDK | Vehicle SDK 2.3.2, Vehicle Service 2.3.22. 추가 예정: FusedLocation 1.1.2, NaviHelper 3.0.5, TextToSpeech 3.3.1, SpeechToText 3.3.1 |
+| Virtual Console | 에뮬레이터 실행 후 `adb forward tcp:8088 tcp:8088`, PC 브라우저에서 `http://127.0.0.1:8088/` 접속, Emulation Controls > Convenience > Door Position / Window Position / Trunk / Frunk Position (공식 가이드와 직접 사용으로 확인) |
 
 ## 4. 알려진 상태와 주의
 
@@ -67,11 +68,19 @@
 
 | SDK | 호출 | 결과(되는지/안 되는지, 오류 메시지) | 확인일 | 처리 |
 |---|---|---|---|---|
-| Vehicle: Door | `checkDoorPositionCapabilities` (SC-000) | 콜백 옴. 읽을 수 있음(accessType READ 이상, 영역 맵 비어 있지 않음). 영역별 내용은 기록하지 않음 | 2026-11-05 | 사용 |
-| Vehicle: Window | `checkWindowPositionCapabilities` | 콜백 옴. 읽을 수 있음 | 2026-11-05 | 사용 |
+| Vehicle: Door | `checkDoorPositionCapabilities` (SC-000) | 콜백 옴. 읽을 수 있음. 응답 영역: ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_RIGHT, REAR, HOOD (ROW_3 없음) | 2026-11-05 | 사용 |
+| Vehicle: Door | `getCurrentDoorPosition(area)` (SC-250) | 응답 영역 6개 모두 콜백 옴, 값 0(닫힘). 오류 없음. 읽기 3초 제한 안에 끝남 | 2026-11-05 | 사용 |
+| Vehicle: Window | `checkWindowPositionCapabilities` | 콜백 옴. 읽을 수 있음. 응답 영역: ROW_1_LEFT, ROW_1_RIGHT, ROW_2_LEFT, ROW_2_RIGHT | 2026-11-05 | 사용 |
+| Vehicle: Window | `getCurrentWindowPosition(area)` (SC-250) | 응답 영역 4개 모두 콜백 옴, 값 0(닫힘). 오류 없음 | 2026-11-05 | 사용 |
 | Vehicle: EvBattery | `checkEvBatteryStateOfChargeCapabilities` | 콜백 옴. 읽을 수 있음 | 2026-11-05 | 사용 |
+| Vehicle: EvBattery | `getEvBatteryStateOfCharge` (SC-250) | 콜백 옴, 값 100(Int). 오류 없음. 단위(%)는 SDK KDoc 기준이며 에뮬레이터 값으로 검증하지 않음 | 2026-11-05 | 사용 |
 | Vehicle: Odometer | `checkCurrentDistanceDrivenCapabilities` | 콜백 옴. 읽을 수 있음 | 2026-11-05 | 사용 |
+| Vehicle: Odometer | `getCurrentDistanceDriven` (SC-250) | 콜백 옴, 값 0.0(Float). 오류 없음. 단위(km)는 SDK KDoc 기준이며 에뮬레이터 값으로 검증하지 않음 | 2026-11-05 | 사용 |
 | Vehicle: TurnSignal | `checkTurnSignalStateCapabilities` | 콜백 옴. 읽을 수 있음 | 2026-11-05 | 사용 |
+| Vehicle: Door (Virtual Console) | `getCurrentDoorPosition` | 콘솔 Door Position에서 Rear left를 Open → 로그 원값 `ROW_2_LEFT=1`, SC-250이 "열림 1개 · 주의", 차량 그림과 "뒤 왼쪽 문 열림" 알림. 모두 닫고 [다시 읽기] → "모두 닫힘 · 정상" | 2026-11-05 | 사용 |
+| Vehicle: Door HOOD/REAR (Virtual Console) | `getCurrentDoorPosition` | 콘솔 Frunk Open → 로그 원값 `HOOD=100`, Trunk Open → `REAR=100`. 따라서 콘솔의 **Frunk=HOOD, Trunk=REAR**로 확인. 뒤 왼쪽 문, Frunk, Trunk를 모두 열면 "열림 3개", 알림 "뒤 왼쪽 문 외 2곳 열림". **열린 값 100은 확인, 중간값(예: 50)의 의미는 미확인** | 2026-11-05 | 사용 |
+| Vehicle: Window (Virtual Console) | `getCurrentWindowPosition` | 콘솔 Window Position에서 창문을 열면 로그 원값 `ROW_1_LEFT=6`, `7`(0~10 중간값)이 읽히고 "열림 1개 · 주의"로 반영 | 2026-11-05 | 사용 |
+| Vehicle: TurnSignal | `getCurrentTurnSignalState` (SC-250) | 콜백 옴, 값 OFF. 오류 없음. 한 번 읽는 값이라 깜빡이는 순간에 OFF로 읽힐 수 있는지는 미확인 | 2026-11-05 | 사용 |
 | FusedLocation | | 미확인 | | |
 | NaviHelper | | 미확인 | | |
 | TextToSpeech (ON_DEVICE, ko-KR) | | 미확인 | | |
@@ -97,6 +106,11 @@
 | 2026-11-03 | 정차 여부는 사용자 확인(SC-200)으로 판단 | 속도·기어를 읽을 수 없음 |
 | 2026-11-03 | TTS·STT는 `Mode.ON_DEVICE`로 쓴다 | HYBRID 기본값은 앱 등록이 필요 |
 | 2026-11-04 | 시안 크기 1682×1210px, 스타일 가이드 확정(현대차 블루 + 포인트 블루, 다크 테마) | 에뮬레이터 앱 영역 측정, 현대차 CI 색상 기반 |
+| 2026-11-05 | SC-250 문 영역 해석: Hood와 Rear도 "0이면 닫힘, 0보다 크면 열림", 중간값의 정도는 보여 주지 않는다. **KDoc 근거: 0은 완전 닫힘만 확인, 중간값(예: 50)의 의미는 문서에 없어 미확인**(SDK의 `setDoorPosition` KDoc: 최대값은 차량마다 다르고, min은 보통 0=완전 닫힘, 영역별 min/max는 capability 응답에서 읽음). 창문은 0보다 크면 열림(0 닫힘, 10 완전 열림) | 사용자 결정 |
+| 2026-11-05 | Virtual Console로 **Frunk=HOOD, Trunk=REAR**를 에뮬레이터에서 확인(열면 원값 100). 문 영역 한국어 이름은 그대로 "앞쪽 덮개"(HOOD), "뒤쪽"(REAR). "뒤쪽"을 "트렁크"로 바꿀지는 사용자 결정(근거는 에뮬레이터 콘솔 이름이며 SDK 문서에는 REAR의 의미가 없음) | 사용자 확인 |
+| 2026-11-05 | SC-250 단위: 배터리는 "%", 주행 거리는 "km"를 붙이고 경고 판단은 하지 않는다. **SDK 문서(KDoc) 기준이며 에뮬레이터 값으로 검증하지 않음** | 사용자 결정. SPEC 1.4, SC-250, SC-260의 "단위 미확인" 문구 5곳(62, 63, 70, 183, 209행)을 사용자 승인 후 수정함(2026-11-05). CLAUDE.md에는 해당 문구가 없어 그대로 둠 |
+| 2026-11-05 | SC-250 배지 규칙: 문과 창문만 정상/주의(닫힘/열림), 배터리·주행 거리·방향지시등은 값만 표시하고 읽지 못했을 때만 회색 "확인 불가". 문 영역 한국어 이름: 앞 왼쪽/앞 오른쪽(Row 1), 뒤 왼쪽/뒤 오른쪽(Row 2), 3열 왼쪽/3열 오른쪽(Row 3), 앞쪽 덮개(후드), 뒤쪽(Rear). 운전석·조수석 표현은 쓰지 않는다. 제목 "차량 상태를 기록했어요", 아무 값도 못 읽었으면 "차량 상태를 확인하지 못했어요" | 사용자 결정 |
+| 2026-11-05 | **예외**: SC-250에는 진행 목록과 [사고 모드 나가기]를 두지 않는다(SC-221과 같은 예외, SPEC 1.1은 모든 사고 모드 화면에 나가기를 요구). 사유: 시안 구성(차량 그림과 상태 카드)에 집중시키고 [이전]으로 SC-240, SC-230, SC-220, SC-210, SC-200을 거쳐 나갈 수 있다. 위치·날씨 카드는 이번에 보이지 않게 한다 | 사용자 결정 |
 | 2026-11-05 | SC-230 항목 5개는 SPEC 문구 그대로, 제목은 시안 "현장을 기록해 두세요". 안내 문구 "휴대폰으로 촬영해 두세요", "나중에 보험사에 보여 줄 수 있어요", "사진은 앱에 저장되지 않아요", 참고용 추가. 음성 메모 카드는 Phase 11 전까지 회색 점선 비활성, "상태 보기" 칩은 생략, [다음]은 채운 버튼. SC-240은 SC-210 템플릿(제목 "상대방 정보를 확인하세요", 카드 "알아 두세요") | 사용자 결정 |
 | 2026-11-05 | tokens 예외(SC-230만): 항목 글자 36 Bold, 행 최소 높이 112, 음성 카드(오른쪽 열) 너비 460. SC-240은 SC-210과 같은 값(40 Bold, 144) | 항목 5개가 화면 높이에 들어가도록. 사용자 결정 |
 | 2026-11-05 | SC-220, SC-221 시안과 SPEC 차이 결정: SC-220 [다음] 없음, 선택된 타일에 "✓ 선택됨" 표시. SC-221은 제목 SPEC("119에 먼저 연락하세요"), 큰 본문 "전화로 119를 눌러 주세요"(시안의 "차량 전화 앱"은 존재 미검증이라 뺌), 112 안내 한 줄 추가, 말할 내용은 SPEC 행으로(시안의 "차량" 행은 뺌), 버튼 [확인했어요], "참고용" 보조 글자 추가 | 사용자 결정 |
@@ -122,6 +136,14 @@
 | 2026-11-04 | 시안은 PNG로 `docs/design`에 두고 Compose로 새로 개발(웹 코드 사용 안 함) | Figma Make 결과물은 React |
 
 ## 8. 작업 기록 (최신이 위)
+
+### 2026-11-05 — Phase 4 SC-250 차량 상태 읽기
+- 한 일: `CapabilityProbe`가 capability 응답의 영역(문, 창문)을 함께 보관. `VehicleReader`(get 호출만, 리스너 없음, set 없음, 호출마다 try/catch와 3초 제한, 읽기 전에 capability가 "읽을 수 있어요"인 기능만 읽음, 영역은 capability 응답에서 확인된 것만)와 `VehicleSnapshot`(읽은 값과 시각, 세션에 보관). SC-200 [네, 세웠어요]에서 백그라운드로 1회 읽기(실패해도 SC-210으로 진행). SC-250 `VehicleStateScreen`: 차량 윗면 그림(Compose Canvas), 상태 카드 5개(문, 창문, 배터리, 주행 거리, 방향지시등), 읽은 시각, [다시 읽기]. 문·창문만 정상/주의 배지, 나머지는 값만, 읽지 못하면 회색 "확인 불가". 위치·날씨 카드는 보이지 않음. 진행 목록과 [사고 모드 나가기]는 두지 않음. SC-260은 자리표시.
+- 확인한 것(에뮬레이터): 5개 읽기 호출이 모두 콜백이 왔고 오류가 없음(위 5절). SC-250 6/7, 제목 "차량 상태를 기록했어요", 기록 시각, 카드 5개. [다시 읽기]가 다시 읽고 시각을 갱신. SC-250에서 [이전]→[다음]을 5번 반복해도 오류가 없고 추가 읽기도 없음(리스너 없음). 읽기 실패 시험(`VehicleReader.call`을 임시로 예외를 던지게 바꿈, 확인 후 되돌림): 제목 "차량 상태를 확인하지 못했어요", 카드 5개 모두 "확인 불가" 배지와 "확인하지 못했어요", 차량 그림은 점선, 앱 종료 없음. 임시 변경은 백업과 비교해 동일하고 저장소에 `TEMP-` 표시가 없음.
+- Virtual Console 확인(사용자, 2026-11-05): 접속은 환경 메모 참고. 문(Rear left)을 열면 "열림 1개 · 주의", 그림과 "뒤 왼쪽 문 열림" 알림. 창문을 열면 "열림 1개 · 주의". Frunk=HOOD, Trunk=REAR로 반영되고 세 곳을 열면 "열림 3개", "뒤 왼쪽 문 외 2곳 열림". 모두 닫으면 "모두 닫힘 · 정상". Logcat 원값(앱의 `SC-250 read` 로그, 코드 변경 없음): `ROW_2_LEFT=1`, `HOOD=100`, `REAR=100`, 창문 `ROW_1_LEFT=6~7`. 이 로그 밖의 원값(Row 1 우측 문 등)은 기록하지 않음.
+- 확인하지 못한 것: Hood/Rear 중간값(예: 50)이 에뮬레이터에서 어떻게 읽히는지(콘솔에서 만들 수 있는지도 미확인), ROW_3 문 영역(응답에 없어서 점선으로만 그림), 방향지시등이 켜져 있을 때의 값, 배터리·주행 거리 단위(SDK 문서 기준만), 일부 영역만 읽기 실패하는 경우(코드 경로만).
+- 커밋: 없음(요청 시에만).
+- 다음 할 일: 사용자 확인 후 Phase 5 (SC-260). (SPEC의 "단위 미확인" 문구 5곳은 2026-11-05 수정 완료)
 
 ### 2026-11-05 — Phase 3-c SC-230, SC-240 (Phase 3 끝)
 - 한 일: SC-230 현장 기록 안내(체크 5개 SPEC 문구, 제목 "현장을 기록해 두세요", "휴대폰으로 촬영해 두세요", "나중에 보험사에 보여 줄 수 있어요", "사진은 앱에 저장되지 않아요", 참고용, 비활성 음성 메모 카드)와 SC-240 상대방 정보 확인(체크 3개, 입력창 없음, "알아 두세요" 카드). 세션 체크 항목 정의 `RecordChecklist`, `OtherPartyChecklist`, `AllChecklists`(SC-260이 "확인함/확인 안 함"에 사용). `CheckItem`에 `compact`(SC-230용). 카메라, 마이크, 정보 아이콘. SC-250은 자리표시 화면.

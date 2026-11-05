@@ -1,5 +1,6 @@
 package ai.pleos.playground.sample.vehicle.session
 
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -14,11 +15,14 @@ data class AccidentSession(
     /** 항목 id -> 체크 여부. 값이 없으면 "확인 안 함". */
     val checks: Map<String, Boolean> = emptyMap(),
     /** SC-220 부상 응답. 선택하지 않고 나가면 "응답 안 함". */
-    val injury: InjuryAnswer = InjuryAnswer.NOT_ANSWERED
+    val injury: InjuryAnswer = InjuryAnswer.NOT_ANSWERED,
+    /** SC-200에서 읽은 차량 상태(SC-250에서 다시 읽으면 갱신). 읽기 전이면 null. */
+    val vehicle: VehicleSnapshot? = null
 ) {
     fun isChecked(id: String): Boolean = checks[id] == true
     fun withChecked(id: String, checked: Boolean): AccidentSession = copy(checks = checks + (id to checked))
     fun withInjury(answer: InjuryAnswer): AccidentSession = copy(injury = answer)
+    fun withVehicle(snapshot: VehicleSnapshot): AccidentSession = copy(vehicle = snapshot)
 }
 
 /** SPEC 1.2의 부상 응답: 없음 / 있음 / 모름 / 응답 안 함. */

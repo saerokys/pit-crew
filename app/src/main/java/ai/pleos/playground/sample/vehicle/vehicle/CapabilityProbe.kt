@@ -2,6 +2,8 @@ package ai.pleos.playground.sample.vehicle.vehicle
 
 import ai.pleos.playground.vehicle.api.model.capability.AccessType
 import ai.pleos.playground.vehicle.api.model.capability.CapabilityConfig
+import ai.pleos.playground.vehicle.constant.area.DoorValue
+import ai.pleos.playground.vehicle.constant.area.WindowValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -10,7 +12,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
-/** SC-000이 지원 여부를 확인하는 5개 기능. 값 읽기는 Phase 4에서 한다. */
+/** SC-000이 지원 여부를 확인하는 5개 기능. */
 enum class VehicleFeature(val title: String) {
     DOOR("문"),
     WINDOW("창문"),
@@ -26,6 +28,17 @@ enum class SupportState(val label: String) {
     UNKNOWN("확인하지 못했어요")
 }
 
+/** capability 응답에서 확인된 영역. SC-250은 이 영역만 읽는다(규칙 5). */
+data class CapabilityAreas(
+    val door: List<DoorValue> = emptyList(),
+    val window: List<WindowValue> = emptyList()
+)
+
+data class CapabilityResult(
+    val states: Map<VehicleFeature, SupportState>,
+    val areas: CapabilityAreas
+)
+
 /**
  * 5개 기능의 capability(지원 여부)만 확인한다. 값을 읽거나 set을 부르지 않는다.
  * 기능마다 예외를 잡고, 3초 안에 응답이 없으면 "확인하지 못했어요"로 둔다. 한 기능의 실패가 다른 기능에 번지지 않는다.
@@ -35,55 +48,74 @@ class CapabilityProbe(
     private val timeoutMs: Long = 3_000L
 ) {
 
-    suspend fun probe(): Map<VehicleFeature, SupportState> = coroutineScope {
-        VehicleFeature.entries
+    private data class FeatureProbe(
+        val state: SupportState,
+        val doorAreas: List<DoorValue> = emptyList(),
+        val windowAreas: List<WindowValue> = emptyList()
+    )
+
+    suspend fun probe(): CapabilityResult = coroutineScope {
+        val results = VehicleFeature.entries
             .map { feature -> feature to async { check(feature) } }
             .associate { (feature, deferred) -> feature to deferred.await() }
+        CapabilityResult(
+            states = results.mapValues { it.value.state },
+            areas = CapabilityAreas(
+                door = results[VehicleFeature.DOOR]?.doorAreas.orEmpty(),
+                window = results[VehicleFeature.WINDOW]?.windowAreas.orEmpty()
+            )
+        )
     }
 
-    private suspend fun check(feature: VehicleFeature): SupportState = try {
+    private suspend fun check(feature: VehicleFeature): FeatureProbe = try {
         session.requireInitialized()
-        withTimeoutOrNull(timeoutMs) { request(feature) } ?: SupportState.UNKNOWN
+        withTimeoutOrNull(timeoutMs) { request(feature) } ?: FeatureProbe(SupportState.UNKNOWN)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        SupportState.UNKNOWN
+        FeatureProbe(SupportState.UNKNOWN)
     }
 
     /** 콜백이 한 번만 결과를 돌려주도록 막는다(성공/실패 중복 호출, 타임아웃 뒤 늦은 응답). */
-    private suspend fun request(feature: VehicleFeature): SupportState =
+    private suspend fun request(feature: VehicleFeature): FeatureProbe =
         suspendCancellableCoroutine { continuation ->
             val finished = AtomicBoolean(false)
-            fun finish(state: SupportState) {
-                if (finished.compareAndSet(false, true) && continuation.isActive) continuation.resume(state)
+            fun finish(probe: FeatureProbe) {
+                if (finished.compareAndSet(false, true) && continuation.isActive) continuation.resume(probe)
             }
-            val onFailed: (Exception) -> Unit = { finish(SupportState.UNKNOWN) }
+            val onFailed: (Exception) -> Unit = { finish(FeatureProbe(SupportState.UNKNOWN)) }
             try {
                 val vehicle = session.vehicle
                 when (feature) {
                     VehicleFeature.DOOR -> vehicle.getDoor().checkDoorPositionCapabilities(
-                        { config, areas -> finish(judge(config, hasAreas = areas.isNotEmpty())) },
+                        { config, areas ->
+                            val values = areas.keys.flatMap { it.values.toList() }.distinct()
+                            finish(FeatureProbe(judge(config, hasAreas = values.isNotEmpty()), doorAreas = values))
+                        },
                         onFailed
                     )
                     VehicleFeature.WINDOW -> vehicle.getWindow().checkWindowPositionCapabilities(
-                        { config, areas -> finish(judge(config, hasAreas = areas.isNotEmpty())) },
+                        { config, areas ->
+                            val values = areas.keys.flatMap { it.values.toList() }.distinct()
+                            finish(FeatureProbe(judge(config, hasAreas = values.isNotEmpty()), windowAreas = values))
+                        },
                         onFailed
                     )
                     VehicleFeature.BATTERY -> vehicle.getEvBattery().checkEvBatteryStateOfChargeCapabilities(
-                        { config -> finish(judge(config)) },
+                        { config -> finish(FeatureProbe(judge(config))) },
                         onFailed
                     )
                     VehicleFeature.ODOMETER -> vehicle.getOdometer().checkCurrentDistanceDrivenCapabilities(
-                        { config -> finish(judge(config)) },
+                        { config -> finish(FeatureProbe(judge(config))) },
                         onFailed
                     )
                     VehicleFeature.TURN_SIGNAL -> vehicle.getTurnSignal().checkTurnSignalStateCapabilities(
-                        { config -> finish(judge(config)) },
+                        { config -> finish(FeatureProbe(judge(config))) },
                         onFailed
                     )
                 }
             } catch (e: Exception) {
-                finish(SupportState.UNKNOWN)
+                finish(FeatureProbe(SupportState.UNKNOWN))
             }
         }
 

@@ -239,6 +239,84 @@ object PitCrewIcons {
         }
     }
 
+    /** 다시 읽기 */
+    val Refresh: ImageVector by lazy {
+        icon("Refresh") {
+            moveTo(19.5f, 12f)
+            arcToRelative(7.5f, 7.5f, 0f, true, true, -2.2f, -5.3f)
+            moveTo(17.5f, 3.5f); lineTo(17.5f, 7f); lineTo(14f, 7f)
+        }
+    }
+
+    /** 문 카드 */
+    val DoorCard: ImageVector by lazy {
+        icon("DoorCard") {
+            moveTo(8f, 3f); lineTo(16f, 3f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+            lineTo(18f, 19f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+            lineTo(8f, 21f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, -2f)
+            lineTo(6f, 5f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+            close()
+            moveTo(10f, 12f); lineTo(14f, 12f)
+        }
+    }
+
+    /** 창문 카드 */
+    val WindowCard: ImageVector by lazy {
+        icon("WindowCard") {
+            moveTo(6f, 4f); lineTo(18f, 4f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+            lineTo(20f, 18f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+            lineTo(6f, 20f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, -2f)
+            lineTo(4f, 6f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+            close()
+            moveTo(12f, 4f); lineTo(12f, 20f)
+            moveTo(4f, 12f); lineTo(20f, 12f)
+        }
+    }
+
+    /** 배터리 카드 */
+    val Battery: ImageVector by lazy {
+        icon("Battery") {
+            moveTo(5f, 8f); lineTo(17f, 8f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)
+            lineTo(19f, 14f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, 2f)
+            lineTo(5f, 16f)
+            arcToRelative(2f, 2f, 0f, false, true, -2f, -2f)
+            lineTo(3f, 10f)
+            arcToRelative(2f, 2f, 0f, false, true, 2f, -2f)
+            close()
+            moveTo(21.5f, 10.5f); lineTo(21.5f, 13.5f)
+            moveTo(6.5f, 11f); lineTo(6.5f, 13f)
+            moveTo(10f, 11f); lineTo(10f, 13f)
+            moveTo(13.5f, 11f); lineTo(13.5f, 13f)
+        }
+    }
+
+    /** 주행 거리 카드 */
+    val Gauge: ImageVector by lazy {
+        icon("Gauge") {
+            moveTo(4f, 17f)
+            arcToRelative(8f, 8f, 0f, false, true, 16f, 0f)
+            moveTo(12f, 17f); lineTo(15.5f, 11f)
+        }
+    }
+
+    /** 방향지시등 카드 */
+    val TurnSignal: ImageVector by lazy {
+        icon("TurnSignal") {
+            moveTo(8f, 6f); lineTo(3f, 12f); lineTo(8f, 18f)
+            moveTo(16f, 6f); lineTo(21f, 12f); lineTo(16f, 18f)
+        }
+    }
+
     /** 앱 아이콘 자리(상단 바) */
     val Car: ImageVector by lazy {
         icon("Car") {

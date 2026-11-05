@@ -34,7 +34,13 @@ import androidx.lifecycle.viewModelScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleReader
+import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,6 +62,7 @@ class MainViewModel(application: Application) :
             callback = this
         ).also { explorerInstance = it }
     private var activeTypedMethodId: String? = null
+    private var readJob: Job? = null
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -91,8 +98,9 @@ class MainViewModel(application: Application) :
         _uiState.update { it.copy(isInitialized = true) }
         viewModelScope.launch {
             val result = CapabilityProbe(vehicleClient).probe()
-            result.forEach { (feature, state) -> Log.i(TAG, "SC-000 capability ${feature.name}: ${state.name}") }
-            _uiState.update { it.copy(featureSupport = result, startup = StartupPhase.DONE) }
+            result.states.forEach { (feature, state) -> Log.i(TAG, "SC-000 capability ${feature.name}: ${state.name}") }
+            Log.i(TAG, "SC-000 capability areas: door=${result.areas.door.map { it.name }} window=${result.areas.window.map { it.name }}")
+            _uiState.update { it.copy(featureSupport = result.states, capabilityAreas = result.areas, startup = StartupPhase.DONE) }
         }
     }
 
@@ -102,7 +110,48 @@ class MainViewModel(application: Application) :
             if (it.accidentSession != null) it
             else it.copy(accidentSession = AccidentSession(startedAtMillis = System.currentTimeMillis()))
         }
+        // SC-200 [네, 세웠어요]에서 차량 상태를 한 번 읽는다. 기다리지 않고 SC-210으로 가며, 실패해도 진행한다.
+        val state = _uiState.value
+        if (state.accidentSession?.vehicle == null && !state.isReadingVehicle) readVehicleState()
     }
+
+    /**
+     * 5개 기능을 한 번 읽어 세션에 스냅샷으로 보관한다(get 호출만, 리스너 없음).
+     * SC-200 [네, 세웠어요]와 SC-250 [다시 읽기]가 부른다. 읽는 동안 세션이 없어지면 결과를 버린다.
+     */
+    fun readVehicleState() {
+        val startedAt = _uiState.value.accidentSession?.startedAtMillis ?: return
+        readJob?.cancel()
+        _uiState.update { it.copy(isReadingVehicle = true) }
+        readJob = viewModelScope.launch {
+            try {
+                // 시작 직후라면 지원 확인(SC-000)이 끝나기를 잠시 기다린다.
+                val ready = withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
+                    ?: _uiState.value
+                val snapshot = VehicleReader(vehicleClient).readAll(ready.featureSupport, ready.capabilityAreas)
+                Log.i(TAG, "SC-250 read: " + describe(snapshot))
+                _uiState.update { state ->
+                    val session = state.accidentSession
+                    if (session == null || session.startedAtMillis != startedAt) {
+                        state.copy(isReadingVehicle = false)
+                    } else {
+                        state.copy(accidentSession = session.withVehicle(snapshot), isReadingVehicle = false)
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "SC-250 read failed: ${e.javaClass.simpleName}")
+                _uiState.update { it.copy(isReadingVehicle = false) }
+            }
+        }
+    }
+
+    private fun describe(s: VehicleSnapshot): String =
+        "doors=${s.doorsState.name}${s.doors.map { "${it.key.name}=${it.value}" }} " +
+            "windows=${s.windowsState.name}${s.windows.map { "${it.key.name}=${it.value}" }} " +
+            "battery=${s.battery.state.name}:${s.battery.value} odometer=${s.odometer.state.name}:${s.odometer.value} " +
+            "turnSignal=${s.turnSignal.state.name}:${s.turnSignal.value}"
 
     fun setChecked(id: String, checked: Boolean) {
         _uiState.update { state ->
@@ -120,7 +169,11 @@ class MainViewModel(application: Application) :
 
     /** 사고 모드를 나가거나 끝냈을 때(홈 도착) 세션 데이터를 버린다. */
     fun endAccidentSession() {
-        _uiState.update { if (it.accidentSession == null) it else it.copy(accidentSession = null) }
+        readJob?.cancel()
+        _uiState.update {
+            if (it.accidentSession == null && !it.isReadingVehicle) it
+            else it.copy(accidentSession = null, isReadingVehicle = false)
+        }
     }
 
     private fun ensureDomainFeatureCounts() {

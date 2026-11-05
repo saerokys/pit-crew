@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
                     onSetChecked = viewModel::setChecked,
                     onSetInjury = viewModel::setInjuryAnswer,
                     onEndSession = viewModel::endAccidentSession,
+                    onReadVehicle = viewModel::readVehicleState,
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

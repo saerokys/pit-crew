@@ -53,6 +53,8 @@ object PitCrewDimens {
     val choiceTileBorder = 4.dp
     val emergencyBannerHeight = 128.dp
     val emergencyCardWidth = 640.dp
+    // SC-250 시안에서 읽은 값
+    val carPanelWidth = 480.dp
 }
 
 object PitCrewShapes {
