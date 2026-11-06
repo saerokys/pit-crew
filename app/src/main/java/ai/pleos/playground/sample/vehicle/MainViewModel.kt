@@ -35,6 +35,9 @@ import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
 import ai.pleos.playground.sample.vehicle.ui.data.withCapabilityRanges
 import ai.pleos.playground.sample.vehicle.ui.data.withFeatureResult
 import ai.pleos.playground.sample.vehicle.vehicle.CapabilityProbe
+import ai.pleos.playground.sample.vehicle.vehicle.CapabilityResult
+import ai.pleos.playground.sample.vehicle.vehicle.mergeProbe
+import ai.pleos.playground.sample.vehicle.vehicle.unknownFeatures
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleClient
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleFeature
@@ -58,6 +61,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) :
@@ -81,6 +86,10 @@ class MainViewModel(application: Application) :
     private var preCheckJob: Job? = null
     private var locationJob: Job? = null
     private var saveJob: Job? = null
+    // 기능 지원 확인(capability) 호출을 한 번에 하나만 하게 한다(시작 확인, 재확인, SC-400 [다시 확인]이 겹치지 않게).
+    private val supportMutex = Mutex()
+    // 시작 때 UNKNOWN인 기능을 다시 확인하는 일은 앱을 켜고 한 번만 한다.
+    private var startupRetryStarted = false
     private val consentStore = ConsentStore(application)
     private val recordStore = RecordStore(application)
     // TextToSpeech는 음성 스위치를 켜고 [소리로 듣기]를 처음 누를 때 만들어진다(여기서는 SDK를 부르지 않는다).
@@ -170,7 +179,7 @@ class MainViewModel(application: Application) :
         }
         _uiState.update { it.copy(isInitialized = true) }
         viewModelScope.launch {
-            val result = CapabilityProbe(vehicleClient).probe()
+            val result = supportMutex.withLock { CapabilityProbe(vehicleClient).probe() }
             logProbe("SC-000", result)
             _uiState.update {
                 it.copy(
@@ -180,6 +189,37 @@ class MainViewModel(application: Application) :
                     startup = StartupPhase.DONE
                 )
             }
+            // 시작 확인에서 시간 안에 응답하지 못한 기능(UNKNOWN)만 백그라운드에서 한 번 더 확인한다(화면은 이미 홈으로 간다).
+            if (!startupRetryStarted) {
+                startupRetryStarted = true
+                retryUnknownSupport("SC-000 retry")
+            }
+        }
+    }
+
+    /**
+     * 아직 UNKNOWN인 기능만 지원 여부를 다시 확인해 `featureSupport`와 `capabilityAreas`에 합친다(읽기 전용, 기능별 3초 제한).
+     * [supportMutex] 안에서 상태를 다시 보므로, 앞선 확인이 이미 해결했거나 UNKNOWN이 없으면 호출하지 않는다(중복 호출 방지).
+     * 초기화에 실패했으면 하지 않는다. 실패하거나 예외가 나도 아무것도 바꾸지 않고(그대로 "확인 불가") 부른 쪽은 계속 진행한다.
+     */
+    private suspend fun retryUnknownSupport(tag: String) {
+        try {
+            supportMutex.withLock {
+                val state = _uiState.value
+                if (!state.isInitialized) return
+                val targets = unknownFeatures(state.featureSupport)
+                if (targets.isEmpty()) return
+                val retried = CapabilityProbe(vehicleClient).probe(targets)
+                logProbe(tag, retried)
+                _uiState.update { current ->
+                    val merged = mergeProbe(CapabilityResult(current.featureSupport, current.capabilityAreas), retried)
+                    current.copy(featureSupport = merged.states, capabilityAreas = merged.areas)
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "$tag support retry failed: ${e.javaClass.simpleName}")
         }
     }
 
@@ -209,7 +249,7 @@ class MainViewModel(application: Application) :
             try {
                 val initialized = _uiState.value.isInitialized || tryInitialize("SC-400")
                 if (initialized) {
-                    val result = CapabilityProbe(vehicleClient).probe()
+                    val result = supportMutex.withLock { CapabilityProbe(vehicleClient).probe() }
                     logProbe("SC-400", result)
                     _uiState.update {
                         it.copy(
@@ -247,8 +287,10 @@ class MainViewModel(application: Application) :
         _uiState.update { it.copy(preCheckSnapshot = null, isPreChecking = true) }
         preCheckJob = viewModelScope.launch {
             try {
-                val ready = withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
-                    ?: _uiState.value
+                withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
+                // 읽기 전에 아직 UNKNOWN인 기능만 다시 확인한다(실패해도 읽기는 진행).
+                retryUnknownSupport("SC-300")
+                val ready = _uiState.value
                 val snapshot = VehicleReader(vehicleClient).readAll(ready.featureSupport, ready.capabilityAreas)
                 Log.i(TAG, "SC-300 read: " + describe(snapshot))
                 _uiState.update { it.copy(preCheckSnapshot = snapshot, isPreChecking = false) }
@@ -294,8 +336,10 @@ class MainViewModel(application: Application) :
         readJob = viewModelScope.launch {
             try {
                 // 시작 직후라면 지원 확인(SC-000)이 끝나기를 잠시 기다린다.
-                val ready = withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
-                    ?: _uiState.value
+                withTimeoutOrNull(5_000L) { _uiState.first { it.startup == StartupPhase.DONE } }
+                // 읽기 전에 아직 UNKNOWN인 기능만 다시 확인한다(실패해도 읽기는 진행). SC-200 [네, 세웠어요]와 SC-250 [다시 읽기]가 함께 쓴다.
+                retryUnknownSupport("SC-200")
+                val ready = _uiState.value
                 val snapshot = VehicleReader(vehicleClient).readAll(ready.featureSupport, ready.capabilityAreas)
                 Log.i(TAG, "SC-250 read: " + describe(snapshot))
                 _uiState.update { state ->
