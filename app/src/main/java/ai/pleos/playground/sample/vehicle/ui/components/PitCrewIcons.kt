@@ -219,6 +219,35 @@ object PitCrewIcons {
         }
     }
 
+    /** 정비소(SC-280) */
+    val Wrench: ImageVector by lazy {
+        icon("Wrench") {
+            moveTo(14.5f, 3.5f)
+            curveTo(11.5f, 3.5f, 9.5f, 6f, 10.2f, 8.8f)
+            lineTo(3.5f, 15.5f)
+            curveTo(2.7f, 16.3f, 2.7f, 17.6f, 3.5f, 18.4f)
+            lineTo(5.6f, 20.5f)
+            curveTo(6.4f, 21.3f, 7.7f, 21.3f, 8.5f, 20.5f)
+            lineTo(15.2f, 13.8f)
+            curveTo(18f, 14.5f, 20.5f, 12.5f, 20.5f, 9.5f)
+            lineTo(17.5f, 12.5f)
+            lineTo(14.5f, 9.5f)
+            lineTo(17.5f, 6.5f)
+            curveTo(16.8f, 4.8f, 15.7f, 3.5f, 14.5f, 3.5f)
+            close()
+        }
+    }
+
+    /** 병원(SC-280) */
+    val PlusBox: ImageVector by lazy {
+        icon("PlusBox") {
+            moveTo(5f, 3.5f); lineTo(19f, 3.5f); lineTo(20.5f, 5f); lineTo(20.5f, 19f); lineTo(19f, 20.5f)
+            lineTo(5f, 20.5f); lineTo(3.5f, 19f); lineTo(3.5f, 5f); close()
+            moveTo(12f, 7.5f); lineTo(12f, 16.5f)
+            moveTo(7.5f, 12f); lineTo(16.5f, 12f)
+        }
+    }
+
     /** 보내기(SC-260, SC-290) */
     val Send: ImageVector by lazy {
         icon("Send") {

@@ -22,6 +22,10 @@ import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.navi.DestinationCategory
+import ai.pleos.playground.sample.vehicle.navi.NaviState
+import ai.pleos.playground.sample.vehicle.navi.RouteResult
+import ai.pleos.playground.sample.vehicle.ui.destination.DestinationScreen
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerScreen
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
@@ -76,6 +80,7 @@ enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?)
     VEHICLE_STATE("SC-250", "차량 상태 기록", 6),
     SUMMARY("SC-260", "접수 요약", 7),
     INSURER("SC-290", "가상 보험사 전달", 7),
+    DESTINATION("SC-280", "다음 장소 안내", 7),
     ENDING("SC-270", "종료와 기록 처리", 7),
     PRE_DEPARTURE("SC-300", "출발 전 점검", null),
     VEHICLE_LINK("SC-400", "차량 연동 상태", null),
@@ -145,6 +150,15 @@ fun PitCrewNavHost(
     voiceState: VoiceState,
     voiceDraft: String?,
     voiceDraftCut: Boolean,
+    destCategory: DestinationCategory,
+    destPlaceId: String?,
+    naviState: NaviState,
+    routeResult: RouteResult,
+    onSelectDestCategory: (DestinationCategory) -> Unit,
+    onSelectDestPlace: (String) -> Unit,
+    onStartNavigation: () -> Unit,
+    onConnectNavi: () -> Unit,
+    onReleaseNavi: () -> Unit,
     insurerUnchecked: Set<InsurerItem>,
     insurerSendState: InsurerSendState,
     insurerLastSent: Set<InsurerItem>,
@@ -176,6 +190,8 @@ fun PitCrewNavHost(
         onStopSpeech()
         // 화면을 옮기면 듣기를 멈추고 SDK를 해제하며 저장하지 않은 인식 결과를 버린다(저장한 메모는 세션에 남는다).
         onReleaseVoice()
+        // SC-280에 들어올 때만 NaviHelper에 연결하고, 떠나면(홈 도착 포함) 해제한다.
+        if (route == PitCrewRoute.DESTINATION) onConnectNavi() else onReleaseNavi()
         if (route == PitCrewRoute.HOME) onReleaseSpeech()
     }
 
@@ -297,6 +313,15 @@ fun PitCrewNavHost(
                     onReread = onReadVehicle
                 )
                 PitCrewRoute.SUMMARY -> SummaryScreen(session = session)
+                PitCrewRoute.DESTINATION -> DestinationScreen(
+                    category = destCategory,
+                    placeId = destPlaceId,
+                    naviState = naviState,
+                    routeResult = routeResult,
+                    onSelectCategory = onSelectDestCategory,
+                    onSelectPlace = onSelectDestPlace,
+                    onStart = onStartNavigation
+                )
                 PitCrewRoute.INSURER -> InsurerScreen(
                     session = session,
                     unchecked = insurerUnchecked,
@@ -363,11 +388,19 @@ fun PitCrewNavHost(
                 onNext = { navigator.push(PitCrewRoute.ENDING) },
                 nextFilled = !session?.insurerReceipts.isNullOrEmpty()
             )
+        } else if (route == PitCrewRoute.DESTINATION) {
+            // SC-280: [이전](SC-270)만. 저장하지 않은 채 홈으로 가 버리지 않게 [홈으로]를 두지 않는다. 채운 버튼은 [길안내 시작] 하나뿐이다.
+            PitCrewBottomBar(onPrevious = { goBack() }, onNext = null)
         } else if (route == PitCrewRoute.ENDING) {
-            // SC-270: 저장하기 전에는 [이전]만(저장은 화면 안 큰 버튼). 저장한 뒤에는 [홈으로]만 화면 안에 있어 하단 바에는 버튼이 없다.
+            // SC-270: 저장하기 전에는 [이전]과 기본 버튼 [다음 장소 안내](SC-280). 저장은 화면 안 큰 버튼이고,
+            // 저장한 뒤에는 [홈으로]가 화면 안에 있어 [이전]은 없고 [다음 장소 안내]만 남는다. 채운 버튼은 화면 안 하나뿐이다.
             PitCrewBottomBar(
                 onPrevious = if (saveState == SaveState.SAVED) null else ({ goBack() }),
-                onNext = null
+                onNext = { navigator.push(PitCrewRoute.DESTINATION) },
+                nextLabel = "다음 장소 안내",
+                nextIcon = PitCrewIcons.Send,
+                nextFilled = false,
+                nextWidth = PitCrewDimens.recheckButtonWidth
             )
         } else if (route.step != null) {
             PitCrewBottomBar(

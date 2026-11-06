@@ -23,6 +23,12 @@ import ai.pleos.playground.sample.vehicle.location.LocationReader
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.location.isLocationSupported
 import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.navi.DemoPlaces
+import ai.pleos.playground.sample.vehicle.navi.DestinationCategory
+import ai.pleos.playground.sample.vehicle.navi.NaviCallback
+import ai.pleos.playground.sample.vehicle.navi.NaviRouter
+import ai.pleos.playground.sample.vehicle.navi.NaviState
+import ai.pleos.playground.sample.vehicle.navi.RouteResult
 import ai.pleos.playground.sample.vehicle.insurer.InsurerPackage
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.AccidentRecord
@@ -125,6 +131,18 @@ class MainViewModel(application: Application) :
             }
         })
     }
+    // NaviHelper는 SC-280에 들어올 때만 연결한다(여기서는 SDK 객체를 만들지 않는다).
+    private val naviRouter by lazy {
+        NaviRouter(getApplication(), object : NaviCallback {
+            override fun onNaviState(state: NaviState) {
+                _uiState.update { it.copy(naviState = state) }
+            }
+
+            override fun onRouteResult(result: RouteResult) {
+                _uiState.update { it.copy(routeResult = result) }
+            }
+        })
+    }
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -151,6 +169,7 @@ class MainViewModel(application: Application) :
         _uiState.update { it.copy(consent = Consent()) }
         releaseSpeech(forgetUnavailable = true)
         releaseVoice(forgetUnavailable = true)
+        releaseNavi()
     }
 
     /**
@@ -549,7 +568,8 @@ class MainViewModel(application: Application) :
         insurerJob?.cancel()
         _uiState.update {
             if (it.accidentSession == null && !it.isReadingVehicle && it.saveState == SaveState.IDLE &&
-                it.insurerSendState == InsurerSendState.IDLE && it.insurerUnchecked.isEmpty() && it.insurerLastSent.isEmpty()
+                it.insurerSendState == InsurerSendState.IDLE && it.insurerUnchecked.isEmpty() && it.insurerLastSent.isEmpty() &&
+                it.destCategory == DestinationCategory.HOSPITAL && it.destPlaceId == DemoPlaces.forCategory(DestinationCategory.HOSPITAL).first().id
             ) it
             else it.copy(
                 accidentSession = null,
@@ -557,8 +577,54 @@ class MainViewModel(application: Application) :
                 saveState = SaveState.IDLE,
                 insurerUnchecked = emptySet(),
                 insurerSendState = InsurerSendState.IDLE,
-                insurerLastSent = emptySet()
+                insurerLastSent = emptySet(),
+                destCategory = DestinationCategory.HOSPITAL,
+                destPlaceId = DemoPlaces.forCategory(DestinationCategory.HOSPITAL).first().id
             )
+        }
+    }
+
+    /** SC-280에 들어올 때: NaviHelper에 연결한다(길안내 요청은 [길안내 시작]을 눌러야만 한다). 실패해도 앱은 계속된다. */
+    fun connectNavi() {
+        try {
+            naviRouter.connect()
+        } catch (e: Exception) {
+            Log.w(TAG, "navi connect failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /** SC-280을 떠날 때, 홈 도착, 동의 초기화, 뷰모델 정리에서: removeListener -> release. 처음 상태로 돌린다. */
+    fun releaseNavi() {
+        try {
+            naviRouter.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "navi release failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /** SC-280 목적지 유형 카드를 고르면 그 유형의 첫 후보가 고른 상태가 된다. 이전 요청 결과는 지운다. */
+    fun selectDestinationCategory(category: DestinationCategory) {
+        _uiState.update {
+            if (it.destCategory == category) it
+            else it.copy(destCategory = category, destPlaceId = DemoPlaces.forCategory(category).firstOrNull()?.id)
+        }
+    }
+
+    fun selectDestinationPlace(placeId: String) {
+        _uiState.update {
+            if (DemoPlaces.find(it.destCategory, placeId) == null) it else it.copy(destPlaceId = placeId)
+        }
+    }
+
+    /** SC-280 [길안내 시작]/[다시 시도]: 고른 후보 하나로 길안내를 요청한다. 연결되지 않았으면 아무것도 하지 않는다. */
+    fun startNavigation() {
+        val state = _uiState.value
+        val place = DemoPlaces.find(state.destCategory, state.destPlaceId) ?: return
+        try {
+            naviRouter.requestRoute(place)
+        } catch (e: Exception) {
+            Log.w(TAG, "navi request failed: ${e.javaClass.simpleName}")
+            _uiState.update { it.copy(routeResult = RouteResult.ERROR) }
         }
     }
 
@@ -1091,6 +1157,7 @@ class MainViewModel(application: Application) :
         Log.i(TAG, "onCleared: releasing Vehicle SDK")
         runCatching { speechPlayer.release() }
         runCatching { voiceRecognizer.release() }
+        runCatching { naviRouter.release() }
         runCatching { explorerInstance?.release() }
         runCatching { vehicleClient.release() }
         Log.i(TAG, "onCleared: Vehicle SDK release requested")

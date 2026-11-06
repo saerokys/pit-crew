@@ -4,6 +4,7 @@ import ai.pleos.playground.sample.vehicle.BuildConfig
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import androidx.activity.compose.BackHandler
 import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.navi.DestinationCategory
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.data.AppPage
@@ -66,6 +67,11 @@ fun SampleApp(
     onToggleSpeech: (String) -> Unit,
     onStopSpeech: () -> Unit,
     onReleaseSpeech: () -> Unit,
+    onSelectDestCategory: (DestinationCategory) -> Unit,
+    onSelectDestPlace: (String) -> Unit,
+    onStartNavigation: () -> Unit,
+    onConnectNavi: () -> Unit,
+    onReleaseNavi: () -> Unit,
     onToggleInsurerItem: (InsurerItem) -> Unit,
     onSendInsurer: () -> Unit,
     onStartVoice: () -> Unit,
@@ -153,6 +159,15 @@ fun SampleApp(
                     voiceState = uiState.voiceState,
                     voiceDraft = uiState.voiceDraft,
                     voiceDraftCut = uiState.voiceDraftCut,
+                    destCategory = uiState.destCategory,
+                    destPlaceId = uiState.destPlaceId,
+                    naviState = uiState.naviState,
+                    routeResult = uiState.routeResult,
+                    onSelectDestCategory = onSelectDestCategory,
+                    onSelectDestPlace = onSelectDestPlace,
+                    onStartNavigation = onStartNavigation,
+                    onConnectNavi = onConnectNavi,
+                    onReleaseNavi = onReleaseNavi,
                     insurerUnchecked = uiState.insurerUnchecked,
                     insurerSendState = uiState.insurerSendState,
                     insurerLastSent = uiState.insurerLastSent,

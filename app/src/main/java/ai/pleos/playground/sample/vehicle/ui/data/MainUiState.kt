@@ -7,6 +7,10 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.navi.DemoPlaces
+import ai.pleos.playground.sample.vehicle.navi.DestinationCategory
+import ai.pleos.playground.sample.vehicle.navi.NaviState
+import ai.pleos.playground.sample.vehicle.navi.RouteResult
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
@@ -59,6 +63,12 @@ data class MainUiState(
     val insurerSendState: InsurerSendState = InsurerSendState.IDLE,
     /** 마지막으로 보낸 항목(같은 항목으로 다시 보내지 않게 한다). */
     val insurerLastSent: Set<InsurerItem> = emptySet(),
+    /** SC-280 NaviHelper 연결 상태와 길안내 요청 결과(SC-280에 있는 동안에만 연결). */
+    val naviState: NaviState = NaviState.IDLE,
+    val routeResult: RouteResult = RouteResult.NONE,
+    /** SC-280에서 고른 목적지 유형(기본은 시안처럼 병원)과 후보 id(기본은 첫 후보). 세션과 함께 초기화된다. */
+    val destCategory: DestinationCategory = DestinationCategory.HOSPITAL,
+    val destPlaceId: String? = DemoPlaces.forCategory(DestinationCategory.HOSPITAL).first().id,
     /** SC-205 동의 상태(앱을 껐다 켜도 유지, 값은 스위치 3개뿐). */
     val consent: Consent = Consent(),
     /** 이 차량에 위치 서비스가 있는지(isSupported). 없으면 SC-205 위치 스위치가 회색이다. */

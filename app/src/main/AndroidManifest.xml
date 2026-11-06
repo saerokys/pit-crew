@@ -34,6 +34,9 @@
     <!-- General permission of the speech service (protectionLevel=normal, not a vehicle permission): SpeechToText SDK (voice memo in SC-230). -->
     <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
 
+    <!-- General permission of the navigation service (protectionLevel=normal, not a vehicle permission): NaviHelper SDK requestRoute (SC-280). NAVI_ROUTE is not declared. -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
+
     <!-- Location read (FusedLocation getLastKnownLocation). protectionLevel=dangerous: asked at runtime in SC-205 only when the user turns location on. -->
     <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
 
