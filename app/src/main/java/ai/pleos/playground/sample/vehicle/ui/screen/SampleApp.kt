@@ -65,6 +65,10 @@ fun SampleApp(
     onToggleSpeech: (String) -> Unit,
     onStopSpeech: () -> Unit,
     onReleaseSpeech: () -> Unit,
+    onStartVoice: () -> Unit,
+    onStopVoice: () -> Unit,
+    onSaveVoice: () -> Unit,
+    onReleaseVoice: () -> Unit,
     onShowHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -143,6 +147,14 @@ fun SampleApp(
                     onToggleSpeech = onToggleSpeech,
                     onStopSpeech = onStopSpeech,
                     onReleaseSpeech = onReleaseSpeech,
+                    voiceState = uiState.voiceState,
+                    voiceDraft = uiState.voiceDraft,
+                    voiceDraftCut = uiState.voiceDraftCut,
+                    voiceNotHeard = uiState.voiceNotHeard,
+                    onStartVoice = onStartVoice,
+                    onStopVoice = onStopVoice,
+                    onSaveVoice = onSaveVoice,
+                    onReleaseVoice = onReleaseVoice,
                     featureSupport = uiState.featureSupport,
                     linkCheckedAtMillis = uiState.linkCheckedAtMillis,
                     isCheckingLink = uiState.isCheckingLink,

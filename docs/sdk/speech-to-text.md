@@ -11,7 +11,7 @@ SDK 버전: SpeechToText SDK v3.3.1
   - `SERVER`: 네트워크와 앱 등록 필요. 폴백 없음.
   - `ON_DEVICE`: 차량 안에서 동작. 이 모드만 쓰면 앱 등록이 필요 없다.
 - Pit Crew는 `Mode.ON_DEVICE`를 명시해서 쓴다. 모드를 생략하면 HYBRID가 되어 앱 등록이 필요해진다.
-- 온디바이스 모드가 한국어를 지원하는지는 문서에서 확인하지 못했다 → 에뮬레이터에서 확인.
+- 온디바이스 모드가 한국어를 지원하는지는 문서에서 확인하지 못했다. 에뮬레이터에서 `setLocale(Locale.KOREA)`는 서비스가 ko-KR로 받아들였고 `UNAVAILABLE_LANGUAGE`는 오지 않았다. **실제 인식은 마이크가 없어 미확인**(2026-11-06).
 
 ## 프로젝트 설정
 - 저장소: `https://nexus-playground.pleos.ai/repository/maven-releases/` (이미 등록됨)
@@ -23,7 +23,7 @@ SDK 버전: SpeechToText SDK v3.3.1
 <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
 ```
 - 초기화, 결과 리스너 등록, 앱 등록, 인식 요청, 오디오 전송에 필요하다. 없으면 초기화나 호출이 실패할 수 있고 `PERMISSION_DENIED`가 온다.
-- 문서는 Android `RECORD_AUDIO` 권한을 언급하지 않는다. 필요한지는 API Reference와 에뮬레이터로 확인한다.
+- 문서는 Android `RECORD_AUDIO` 권한을 언급하지 않는다. 확인 결과(2026-11-06, 에뮬레이터): `STT_SERVICE`는 protectionLevel=normal(설치 때 자동 허용), SDK 안에 `RECORD_AUDIO` 문자열이 없고, 서비스가 호출한 앱의 `RECORD_AUDIO` 앱옵스를 확인해 허용했다. 앱은 `RECORD_AUDIO`를 선언하지 않는다(실제 차량은 미확인).
 
 ## 사용 흐름
 1. 인스턴스 생성: `SpeechToText(context, Mode.ON_DEVICE)` (패키지 `ai.pleos.playground.stt.SpeechToText`)
@@ -72,6 +72,7 @@ private val resultListener = object : ResultListener {
 - 오류 종류는 `ErrorType`으로 전달된다. 전체 표는 문서의 Error code 페이지(`SpeechToText/error-code`)에 있으며 아직 읽지 않았다. TTS의 `ErrorType`과 `PERMISSION_DENIED`, `MIC_ERROR`, `NETWORK_ERROR` 같은 값이 겹칠 가능성이 있지만 확인 전에는 같다고 가정하지 않는다.
 
 ## 에뮬레이터
+- 확인한 콜백 의미(에뮬레이터): `onReady`는 서비스가 마이크를 열고 말을 받을 준비가 된 시점(`request()` 뒤 약 0.3~1.3초, 앱 설치 직후 첫 호출은 약 4.7초)이고, `onStartedRecognition`은 말소리가 감지되었을 때 온다(조용하면 오지 않음). 말소리가 없으면 `onEndedRecognition`·`onError` 없이 계속 기다리므로 앱이 `stop()`을 불러야 한다. 해제 순서 `stop()` → `removeListener()` → `release()`는 서비스 쪽에서도 `close`와 녹음기 해제로 보인다.
 - 에뮬레이터에서 개발·검증하며, 마이크 접근 설정(configure-pleos-connect-emulator의 microphone access)이 필요하다. 에뮬레이터에서 실제로 인식이 되는지는 미확인.
 
 ## Pit Crew 사용 규칙 (SC-230)

@@ -9,6 +9,7 @@ import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
+import ai.pleos.playground.sample.vehicle.stt.VoiceState
 import ai.pleos.playground.sample.vehicle.tts.SpeechState
 import ai.pleos.playground.sample.vehicle.vehicle.CapabilityAreas
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
@@ -43,6 +44,14 @@ data class MainUiState(
     val isReadingVehicle: Boolean = false,
     /** [소리로 듣기] 버튼 상태(음성 스위치를 켜고 버튼을 눌렀을 때만 바뀐다). */
     val speechState: SpeechState = SpeechState.IDLE,
+    /** SC-230 음성 메모 인식 상태(음성 스위치를 켜고 [말하기]를 눌렀을 때만 바뀐다). */
+    val voiceState: VoiceState = VoiceState.IDLE,
+    /** 방금 인식한 결과(아직 [저장]하지 않음). 화면을 떠나거나 [다시 말하기]를 누르면 버린다. 메모리에만 둔다. */
+    val voiceDraft: String? = null,
+    /** [voiceDraft]가 글자 수 제한(100자)으로 잘렸는지(잘렸을 때만 확인 화면에 안내 한 줄). */
+    val voiceDraftCut: Boolean = false,
+    /** 방금 못 알아들어 대기로 돌아왔는지("잘 듣지 못했어요. 다시 말해 주세요."). 다시 말하기를 누르거나 화면을 떠나면 지운다. */
+    val voiceNotHeard: Boolean = false,
     /** SC-205 동의 상태(앱을 껐다 켜도 유지, 값은 스위치 3개뿐). */
     val consent: Consent = Consent(),
     /** 이 차량에 위치 서비스가 있는지(isSupported). 없으면 SC-205 위치 스위치가 회색이다. */

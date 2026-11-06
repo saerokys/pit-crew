@@ -59,12 +59,15 @@ private fun Checklist(
 /**
  * SC-230 현장 기록 안내. 앱은 사진을 찍거나 저장하지 않는다(카메라 호출, 사진 저장 코드 없음).
  * 체크 5개는 사용자가 휴대폰으로 직접 촬영했는지 표시하는 용도다.
+ * 오른쪽 음성 메모 카드는 [VoiceMemoCard]다(음성 스위치를 켜고 사용할 수 있을 때만 동작).
  */
 @Composable
 fun RecordScreen(
     session: AccidentSession?,
     onCheckedChange: (String, Boolean) -> Unit,
     onExitRequest: () -> Unit,
+    voiceUi: VoiceMemoUi,
+    voiceActions: VoiceMemoActions,
     modifier: Modifier = Modifier
 ) {
     val colors = PitCrewTheme.colors
@@ -74,7 +77,7 @@ fun RecordScreen(
         onExitRequest = onExitRequest,
         modifier = modifier,
         right = {
-            VoiceMemoCard()
+            VoiceMemoCard(ui = voiceUi, actions = voiceActions, modifier = Modifier.weight(1f))
             Spacer(Modifier.height(PitCrewDimens.touchGap))
             Text(DISCLAIMER, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
         }

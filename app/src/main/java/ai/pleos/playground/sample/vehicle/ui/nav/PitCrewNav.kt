@@ -6,6 +6,9 @@ import ai.pleos.playground.sample.vehicle.ui.accident.EmergencyScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.InjuryScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.OtherPartyScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.RecordScreen
+import ai.pleos.playground.sample.vehicle.ui.accident.VoiceMemoActions
+import ai.pleos.playground.sample.vehicle.ui.accident.VoiceMemoUi
+import ai.pleos.playground.sample.vehicle.stt.VoiceState
 import ai.pleos.playground.sample.vehicle.ui.accident.SafetyCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.accident.StopCheckScreen
 import ai.pleos.playground.sample.vehicle.ui.components.DialogButton
@@ -135,6 +138,14 @@ fun PitCrewNavHost(
     onToggleSpeech: (String) -> Unit,
     onStopSpeech: () -> Unit,
     onReleaseSpeech: () -> Unit,
+    voiceState: VoiceState,
+    voiceDraft: String?,
+    voiceDraftCut: Boolean,
+    voiceNotHeard: Boolean,
+    onStartVoice: () -> Unit,
+    onStopVoice: () -> Unit,
+    onSaveVoice: () -> Unit,
+    onReleaseVoice: () -> Unit,
     featureSupport: Map<VehicleFeature, SupportState>,
     linkCheckedAtMillis: Long?,
     isCheckingLink: Boolean,
@@ -154,6 +165,8 @@ fun PitCrewNavHost(
     // 화면이 바뀌면 읽기를 멈추고, 홈에 도착하면(사고 모드 끝) TTS를 해제한다.
     LaunchedEffect(route) {
         onStopSpeech()
+        // 화면을 옮기면 듣기를 멈추고 SDK를 해제하며 저장하지 않은 인식 결과를 버린다(저장한 메모는 세션에 남는다).
+        onReleaseVoice()
         if (route == PitCrewRoute.HOME) onReleaseSpeech()
     }
 
@@ -253,7 +266,21 @@ fun PitCrewNavHost(
                 PitCrewRoute.RECORD -> RecordScreen(
                     session = session,
                     onCheckedChange = onSetChecked,
-                    onExitRequest = { showExitDialog = true }
+                    onExitRequest = { showExitDialog = true },
+                    voiceUi = VoiceMemoUi(
+                        voiceOn = consent.voice,
+                        state = voiceState,
+                        draft = voiceDraft,
+                        saved = session?.voiceMemo,
+                        cut = voiceDraftCut,
+                        notHeard = voiceNotHeard
+                    ),
+                    voiceActions = VoiceMemoActions(
+                        onSpeak = onStartVoice,
+                        onStop = onStopVoice,
+                        onSave = onSaveVoice,
+                        onRetry = onStartVoice
+                    )
                 )
                 PitCrewRoute.VEHICLE_STATE -> VehicleStateScreen(
                     session = session,

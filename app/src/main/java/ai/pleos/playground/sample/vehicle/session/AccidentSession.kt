@@ -32,9 +32,15 @@ data class AccidentSession(
     /** 사고 모드를 시작할 때 위치와 네트워크를 모두 허용했는지(날씨 조회 대상인지). */
     val weatherRequested: Boolean = false,
     /** 날씨 조회 결과(조건 문구와 온도, 상태만). 좌표는 담지 않는다. 조회 전이거나 요청하지 않았으면 null. */
-    val weather: WeatherResult? = null
+    val weather: WeatherResult? = null,
+    /**
+     * 음성 메모(SC-230, 사용자가 확인하고 [저장]한 한 건, 최대 100자). 세션 메모리에만 두고 디스크에 쓰지 않으며
+     * 사고 기록(SC-270 저장 JSON)에도 넣지 않는다(결정 A). 홈으로 가면 세션과 함께 사라진다. 로그에는 글자 수만 남긴다.
+     */
+    val voiceMemo: String? = null
 ) {
     fun withWeather(result: WeatherResult): AccidentSession = copy(weather = result)
+    fun withVoiceMemo(text: String): AccidentSession = copy(voiceMemo = text)
     fun withLocationStatus(status: LocationStatus): AccidentSession = copy(locationStatus = status)
     fun withAddress(result: AddressResult): AccidentSession = copy(address = result)
     fun isChecked(id: String): Boolean = checks[id] == true

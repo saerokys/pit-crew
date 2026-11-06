@@ -16,6 +16,8 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         // 앱이 화면에서 사라지면 읽기를 멈춘다.
         viewModel.stopSpeech()
+        // 앱이 화면에서 사라지면 듣기도 멈추고 SDK를 해제한다(마이크를 열어 두지 않는다).
+        viewModel.releaseVoice()
         super.onStop()
     }
 
@@ -46,6 +48,10 @@ class MainActivity : ComponentActivity() {
                     onToggleSpeech = viewModel::toggleSpeech,
                     onStopSpeech = viewModel::stopSpeech,
                     onReleaseSpeech = { viewModel.releaseSpeech() },
+                    onStartVoice = viewModel::startVoiceMemo,
+                    onStopVoice = viewModel::stopVoiceMemo,
+                    onSaveVoice = viewModel::confirmVoiceMemo,
+                    onReleaseVoice = { viewModel.releaseVoice() },
                     onShowHome = viewModel::showHome,
                     onOpenDomain = viewModel::showApiExplorer,
                     onSelectFeature = viewModel::selectFeature,

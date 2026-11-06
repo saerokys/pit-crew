@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.fused.location)
     implementation(libs.text.to.speech)
+    implementation(libs.speech.to.text)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

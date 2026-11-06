@@ -28,6 +28,9 @@ import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.settings.ConsentStore
+import ai.pleos.playground.sample.vehicle.stt.VoiceMemoCallback
+import ai.pleos.playground.sample.vehicle.stt.VoiceMemoRecognizer
+import ai.pleos.playground.sample.vehicle.stt.VoiceState
 import ai.pleos.playground.sample.vehicle.tts.SpeechPlayer
 import ai.pleos.playground.sample.vehicle.weather.WeatherResolver
 import ai.pleos.playground.sample.vehicle.weather.WeatherResult
@@ -100,6 +103,23 @@ class MainViewModel(application: Application) :
     private val speechPlayer by lazy {
         SpeechPlayer(getApplication()) { state -> _uiState.update { it.copy(speechState = state) } }
     }
+    // SpeechToText는 음성 스위치를 켜고 [말하기]를 처음 누를 때 만들어진다(여기서는 SDK 객체를 만들지 않는다).
+    private val voiceRecognizer by lazy {
+        VoiceMemoRecognizer(getApplication(), object : VoiceMemoCallback {
+            override fun onState(state: VoiceState) {
+                _uiState.update { it.copy(voiceState = state) }
+            }
+
+            override fun onFinalText(text: String, cut: Boolean) {
+                // 인식 결과는 [저장]을 누를 때까지 화면 확인용으로만 들고 있다(내용은 로그에 남기지 않는다).
+                _uiState.update { it.copy(voiceDraft = text, voiceDraftCut = cut, voiceNotHeard = false) }
+            }
+
+            override fun onNoResult() {
+                _uiState.update { it.copy(voiceDraft = null, voiceDraftCut = false, voiceNotHeard = true) }
+            }
+        })
+    }
     private val pendingApiValues = mutableMapOf<String, Map<String, String>>()
     private val featureRequestFlow = FeatureRequestFlow()
 
@@ -125,6 +145,7 @@ class MainViewModel(application: Application) :
         consentStore.clear()
         _uiState.update { it.copy(consent = Consent()) }
         releaseSpeech(forgetUnavailable = true)
+        releaseVoice(forgetUnavailable = true)
     }
 
     /**
@@ -136,7 +157,13 @@ class MainViewModel(application: Application) :
         try {
             when (_uiState.value.speechState) {
                 SpeechState.PREPARING, SpeechState.SPEAKING -> speechPlayer.stop()
-                else -> speechPlayer.speak(text)
+                else -> {
+                    // 듣는 중이면 먼저 멈춘다(읽는 소리를 마이크가 듣지 않게).
+                    if (_uiState.value.voiceState == VoiceState.PREPARING || _uiState.value.voiceState == VoiceState.LISTENING) {
+                        voiceRecognizer.release()
+                    }
+                    speechPlayer.speak(text)
+                }
             }
         } catch (e: Exception) {
             Log.w(TAG, "speech toggle failed: ${e.javaClass.simpleName}")
@@ -160,6 +187,61 @@ class MainViewModel(application: Application) :
             speechPlayer.release(forgetUnavailable)
         } catch (e: Exception) {
             Log.w(TAG, "speech release failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /**
+     * SC-230 [말하기]/[다시 말하기]: 음성 스위치를 켠 경우에만 듣기를 시작한다(꺼져 있으면 SDK 객체를 만들지 않는다).
+     * 소리 읽기(TTS)가 있으면 먼저 멈추고, 저장하지 않은 이전 인식 결과는 버린다.
+     */
+    fun startVoiceMemo() {
+        val state = _uiState.value
+        if (!state.consent.voice || state.accidentSession == null) return
+        try {
+            stopSpeech()
+            _uiState.update { it.copy(voiceDraft = null, voiceDraftCut = false, voiceNotHeard = false) }
+            voiceRecognizer.start()
+        } catch (e: Exception) {
+            Log.w(TAG, "voice start failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /** SC-230 듣는 중 [멈추기]: 그때까지 들은 결과가 있으면 결과 확인으로, 없으면 대기로 돌아간다. */
+    fun stopVoiceMemo() {
+        try {
+            voiceRecognizer.stopListening()
+        } catch (e: Exception) {
+            Log.w(TAG, "voice stop failed: ${e.javaClass.simpleName}")
+        }
+    }
+
+    /**
+     * SC-230 결과 확인 [저장]: 인식 결과를 세션에 확정한다(1건, 최대 100자, 이미 있던 메모는 바뀐다).
+     * 메모리에만 두고 디스크에 쓰지 않으며 사고 기록(SC-270)에도 넣지 않는다. 로그에는 글자 수만 남긴다.
+     */
+    fun confirmVoiceMemo() {
+        val draft = _uiState.value.voiceDraft ?: return
+        _uiState.update { state ->
+            val session = state.accidentSession
+            if (session == null) state.copy(voiceDraft = null)
+            else state.copy(accidentSession = session.withVoiceMemo(draft), voiceDraft = null, voiceDraftCut = false, voiceNotHeard = false)
+        }
+        Log.i(TAG, "voice memo saved len=${draft.length}")
+    }
+
+    /**
+     * 화면 이동, 앱이 가려질 때, 홈 도착, 동의 초기화, 뷰모델 정리에서: 듣기를 멈추고 SDK를 해제(stop -> removeListener -> release)하고
+     * 저장하지 않은 인식 결과를 버린다. [forgetUnavailable]이 참이면 "사용할 수 없음"(초기화 실패)도 잊는다.
+     */
+    fun releaseVoice(forgetUnavailable: Boolean = false) {
+        try {
+            voiceRecognizer.release(forgetUnavailable)
+        } catch (e: Exception) {
+            Log.w(TAG, "voice release failed: ${e.javaClass.simpleName}")
+        }
+        _uiState.update {
+            if (it.voiceDraft == null && !it.voiceDraftCut && !it.voiceNotHeard) it
+            else it.copy(voiceDraft = null, voiceDraftCut = false, voiceNotHeard = false)
         }
     }
 
@@ -952,6 +1034,7 @@ class MainViewModel(application: Application) :
     override fun onCleared() {
         Log.i(TAG, "onCleared: releasing Vehicle SDK")
         runCatching { speechPlayer.release() }
+        runCatching { voiceRecognizer.release() }
         runCatching { explorerInstance?.release() }
         runCatching { vehicleClient.release() }
         Log.i(TAG, "onCleared: Vehicle SDK release requested")
