@@ -9,6 +9,8 @@ import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.vehicle.Reading
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
+import ai.pleos.playground.sample.vehicle.weather.WeatherResult
+import ai.pleos.playground.sample.vehicle.weather.WeatherStatus
 import ai.pleos.playground.vehicle.constant.area.DoorValue
 import ai.pleos.playground.vehicle.constant.area.TurnSignalValue
 import ai.pleos.playground.vehicle.constant.area.WindowValue
@@ -30,7 +32,9 @@ class AccidentRecordTest {
         address: AddressResult? = null,
         injury: InjuryAnswer = InjuryAnswer.NOT_ANSWERED,
         checks: Map<String, Boolean> = emptyMap(),
-        vehicle: VehicleSnapshot? = null
+        vehicle: VehicleSnapshot? = null,
+        weatherRequested: Boolean = false,
+        weather: WeatherResult? = null
     ) = AccidentSession(
         startedAtMillis = 1_700_000_000_000L,
         checks = checks,
@@ -39,7 +43,9 @@ class AccidentRecordTest {
         locationRequested = locationRequested,
         locationStatus = locationStatus,
         addressRequested = addressRequested,
-        address = address
+        address = address,
+        weatherRequested = weatherRequested,
+        weather = weather
     )
 
     private fun snapshot() = VehicleSnapshot(
@@ -64,10 +70,10 @@ class AccidentRecordTest {
     }
 
     @Test
-    fun topLevelHasOnlyTheFourItemsAndFormatVersion() {
+    fun topLevelHasOnlyTheItemsAndFormatVersion() {
         val record = AccidentRecord.from(session())
         assertEquals(
-            setOf("version", "startedAt", "location", "vehicle", "checks"),
+            setOf("version", "startedAt", "location", "weather", "vehicle", "checks"),
             record.keys
         )
         assertEquals(AccidentRecord.FORMAT_VERSION, record["version"])
@@ -82,14 +88,16 @@ class AccidentRecordTest {
             locationStatus = LocationStatus.OK,
             addressRequested = true,
             address = AddressResult(AddressStatus.OK, fakeAddress),
+            weatherRequested = true,
+            weather = WeatherResult(WeatherStatus.OK, "맑음", 18),
             injury = InjuryAnswer.YES,
             checks = AllChecklists.flatMap { it.items }.associate { it.id to true },
             vehicle = snapshot()
         )
         val keys = allKeys(AccidentRecord.from(full))
         val allowed = setOf(
-            "version", "startedAt", "location", "vehicle", "checks",
-            "status", "addressStatus", "address", "addressCredit",
+            "version", "startedAt", "location", "weather", "vehicle", "checks",
+            "status", "addressStatus", "address", "addressCredit", "condition", "temperatureC",
             "readAt", "doors", "windows", "battery", "odometer", "turnSignal",
             "ROW_1_LEFT", "HOOD", "REAR"
         ) + AllChecklists.flatMap { it.items }.map { it.id }
@@ -100,6 +108,54 @@ class AccidentRecordTest {
         }
         // 부상 응답 글자가 값으로도 새지 않는다.
         assertFalse(AccidentRecord.from(full).toString().contains("몇 명"))
+    }
+
+    @Test
+    fun formatVersionIsTwo() {
+        assertEquals(2, AccidentRecord.FORMAT_VERSION)
+        assertEquals(2, AccidentRecord.from(session())["version"])
+    }
+
+    @Test
+    fun weatherNotUsedWhenNotRequested() {
+        val w = AccidentRecord.from(session(locationRequested = true, locationStatus = LocationStatus.OK)).part("weather")
+        assertEquals("NOT_USED", w["status"])
+        assertNull(w["condition"])
+        assertNull(w["temperatureC"])
+    }
+
+    @Test
+    fun weatherOkRecordsConditionAndTemperatureOnly() {
+        val w = AccidentRecord.from(
+            session(
+                locationRequested = true, locationStatus = LocationStatus.OK, weatherRequested = true,
+                weather = WeatherResult(WeatherStatus.OK, "맑음", 18)
+            )
+        ).part("weather")
+        assertEquals(setOf("status", "condition", "temperatureC"), w.keys)
+        assertEquals("OK", w["status"])
+        assertEquals("맑음", w["condition"])
+        assertEquals(18, w["temperatureC"])
+    }
+
+    @Test
+    fun weatherFailureOrPendingRecordsUnavailableWithoutValues() {
+        WeatherStatus.entries.filter { it != WeatherStatus.OK }.forEach { status ->
+            val w = AccidentRecord.from(
+                session(
+                    locationRequested = true, locationStatus = LocationStatus.OK, weatherRequested = true,
+                    weather = WeatherResult(status)
+                )
+            ).part("weather")
+            assertEquals("UNAVAILABLE", w["status"])
+            assertNull(w["condition"])
+            assertNull(w["temperatureC"])
+        }
+        // 조회 전(읽는 중)에 저장한 경우와 위치를 읽지 못한 경우도 값이 없다.
+        val pending = AccidentRecord.from(session(locationRequested = true, locationStatus = null, weatherRequested = true)).part("weather")
+        assertEquals("UNAVAILABLE", pending["status"])
+        val noLocation = AccidentRecord.from(session(locationRequested = true, locationStatus = LocationStatus.TIMEOUT, weatherRequested = true)).part("weather")
+        assertEquals("UNAVAILABLE", noLocation["status"])
     }
 
     @Test

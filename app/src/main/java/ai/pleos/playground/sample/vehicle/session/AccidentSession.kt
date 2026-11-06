@@ -3,6 +3,7 @@ package ai.pleos.playground.sample.vehicle.session
 import ai.pleos.playground.sample.vehicle.address.AddressResult
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
+import ai.pleos.playground.sample.vehicle.weather.WeatherResult
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,8 +28,13 @@ data class AccidentSession(
     /** 사고 모드를 시작할 때 위치와 네트워크를 모두 허용했는지(주소 조회 대상인지). */
     val addressRequested: Boolean = false,
     /** 주소 조회 결과(주소 문자열과 상태만). 조회 전이거나 요청하지 않았으면 null. */
-    val address: AddressResult? = null
+    val address: AddressResult? = null,
+    /** 사고 모드를 시작할 때 위치와 네트워크를 모두 허용했는지(날씨 조회 대상인지). */
+    val weatherRequested: Boolean = false,
+    /** 날씨 조회 결과(조건 문구와 온도, 상태만). 좌표는 담지 않는다. 조회 전이거나 요청하지 않았으면 null. */
+    val weather: WeatherResult? = null
 ) {
+    fun withWeather(result: WeatherResult): AccidentSession = copy(weather = result)
     fun withLocationStatus(status: LocationStatus): AccidentSession = copy(locationStatus = status)
     fun withAddress(result: AddressResult): AccidentSession = copy(address = result)
     fun isChecked(id: String): Boolean = checks[id] == true

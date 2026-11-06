@@ -13,9 +13,13 @@ import ai.pleos.playground.sample.vehicle.ui.components.TopBarButton
 import ai.pleos.playground.sample.vehicle.ui.summary.AddressUi
 import ai.pleos.playground.sample.vehicle.ui.summary.LocationUi
 import ai.pleos.playground.sample.vehicle.ui.summary.OSM_CREDIT
+import ai.pleos.playground.sample.vehicle.ui.summary.WEATHER_CREDIT
+import ai.pleos.playground.sample.vehicle.ui.summary.WeatherUi
 import ai.pleos.playground.sample.vehicle.ui.summary.addressText
 import ai.pleos.playground.sample.vehicle.ui.summary.addressUi
 import ai.pleos.playground.sample.vehicle.ui.summary.locationUi
+import ai.pleos.playground.sample.vehicle.ui.summary.weatherText
+import ai.pleos.playground.sample.vehicle.ui.summary.weatherUi
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewDimens
 import ai.pleos.playground.sample.vehicle.ui.theme.pitcrew.PitCrewTheme
 import ai.pleos.playground.sample.vehicle.vehicle.AreaNames
@@ -207,28 +211,60 @@ fun VehicleStateScreen(
                     InfoStatusCard(PitCrewIcons.Gauge, "주행 거리", odometer, Modifier.weight(1f).fillMaxHeight())
                 }
                 InfoStatusCard(PitCrewIcons.TurnSignal, "방향지시등", turn, Modifier.weight(1f).fillMaxWidth())
-                // 위치를 허용한 경우에만 보이는 점선 카드. 좌표는 보이지 않고, 네트워크도 허용했으면 주소(출처 표기 포함)를 보여 준다.
-                locationUi(session)?.let { ui ->
-                    val address = addressText(session)
-                    val info = when {
-                        ui == LocationUi.PENDING -> CardInfo("위치 확인 중이에요", isMessage = true)
-                        ui == LocationUi.UNAVAILABLE -> CardInfo("위치를 확인하지 못했어요", BadgeStatus.UNKNOWN, isMessage = true)
-                        address != null -> CardInfo(address, isMessage = true)
-                        addressUi(session) == AddressUi.PENDING -> CardInfo("주소를 찾는 중이에요", isMessage = true)
-                        addressUi(session) == AddressUi.FAILED -> CardInfo("위치 확인됨 · 주소 확인 불가", isMessage = true)
-                        else -> CardInfo("위치 확인됨", isMessage = true)
+                // 위치를 허용한 경우에만 보이는 점선 카드(사고 위치). 좌표는 보이지 않고, 네트워크도 허용했으면 주소(출처 표기 포함)와
+                // 날씨 카드(출처 표기 포함)를 보여 준다. 위치를 껐거나 네트워크를 껐으면 날씨 카드는 보이지 않는다.
+                val locationState = locationUi(session)
+                val weatherState = weatherUi(session)
+                if (locationState != null || weatherState != null) {
+                    Row(
+                        modifier = Modifier.weight(if (weatherState != null) 1.25f else 1f).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(PitCrewDimens.touchGap)
+                    ) {
+                        locationState?.let { ui ->
+                            val address = addressText(session)
+                            val info = when {
+                                ui == LocationUi.PENDING -> CardInfo("위치 확인 중이에요", isMessage = true)
+                                ui == LocationUi.UNAVAILABLE -> CardInfo("위치를 확인하지 못했어요", BadgeStatus.UNKNOWN, isMessage = true)
+                                address != null -> CardInfo(address, isMessage = true)
+                                addressUi(session) == AddressUi.PENDING -> CardInfo("주소를 찾는 중이에요", isMessage = true)
+                                addressUi(session) == AddressUi.FAILED -> CardInfo("위치 확인됨 · 주소 확인 불가", isMessage = true)
+                                else -> CardInfo("위치 확인됨", isMessage = true)
+                            }
+                            StatusCard(
+                                icon = PitCrewIcons.Pin,
+                                label = "사고 위치(주소)",
+                                value = info.value,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                badge = info.badge,
+                                isMessage = true,
+                                dashed = true,
+                                // 날씨 카드와 나란히 있어 폭이 좁을 때는 출처를 값 아래 줄에 둔다.
+                                labelEnd = if (address != null && weatherState == null) OSM_CREDIT else null,
+                                hint = if (address != null && weatherState != null) OSM_CREDIT else null,
+                                singleLineValue = true
+                            )
+                        }
+                        weatherState?.let { ui ->
+                            val text = weatherText(session)
+                            val info = when {
+                                ui == WeatherUi.PENDING -> CardInfo("날씨를 찾는 중이에요", isMessage = true)
+                                ui == WeatherUi.FAILED || text == null -> CardInfo("날씨를 확인하지 못했어요", BadgeStatus.UNKNOWN, isMessage = true)
+                                else -> CardInfo(text)
+                            }
+                            StatusCard(
+                                icon = PitCrewIcons.Sun,
+                                label = "날씨",
+                                value = info.value,
+                                modifier = Modifier.weight(1f).fillMaxHeight(),
+                                badge = info.badge,
+                                isMessage = info.isMessage,
+                                dashed = true,
+                                // 날씨 값이 보일 때만 출처를 함께 보여 준다(CC BY 4.0).
+                                hint = if (!info.isMessage) WEATHER_CREDIT else null,
+                                singleLineValue = true
+                            )
+                        }
                     }
-                    StatusCard(
-                        icon = PitCrewIcons.Pin,
-                        label = "사고 위치(주소)",
-                        value = info.value,
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        badge = info.badge,
-                        isMessage = true,
-                        dashed = true,
-                        labelEnd = if (address != null) OSM_CREDIT else null,
-                        singleLineValue = true
-                    )
                 }
             }
         }

@@ -29,6 +29,9 @@ import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.settings.ConsentStore
 import ai.pleos.playground.sample.vehicle.tts.SpeechPlayer
+import ai.pleos.playground.sample.vehicle.weather.WeatherResolver
+import ai.pleos.playground.sample.vehicle.weather.WeatherResult
+import ai.pleos.playground.sample.vehicle.weather.WeatherStatus
 import ai.pleos.playground.sample.vehicle.tts.SpeechState
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.data.StartupPhase
@@ -55,6 +58,7 @@ import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -311,7 +315,8 @@ class MainViewModel(application: Application) :
                 accidentSession = AccidentSession(
                     startedAtMillis = System.currentTimeMillis(),
                     locationRequested = it.consent.location,
-                    addressRequested = it.consent.location && it.consent.network
+                    addressRequested = it.consent.location && it.consent.network,
+                    weatherRequested = it.consent.location && it.consent.network
                 )
             )
         }
@@ -360,8 +365,8 @@ class MainViewModel(application: Application) :
     }
 
     /**
-     * 사고 모드 시작 때 위치를 1회 읽고, 네트워크도 허용했으면 주소를 1회 조회한다(재시도 없음).
-     * 좌표는 이 함수 안에서 주소 조회에만 쓰고 세션, 로그, 화면에 남기지 않는다. 세션에는 상태와 주소 문자열만 둔다.
+     * 사고 모드 시작 때 위치를 1회 읽고, 네트워크도 허용했으면 주소와 날씨를 각각 1회 조회한다(동시에, 재시도 없음).
+     * 좌표는 이 함수 안에서 주소·날씨 조회에만 쓰고 세션, 로그, 화면에 남기지 않는다. 세션에는 상태와 주소 문자열, 날씨 한 줄(조건, 온도)만 둔다.
      */
     private fun readLocationOnce(startedAt: Long) {
         locationJob = viewModelScope.launch {
@@ -371,11 +376,16 @@ class MainViewModel(application: Application) :
                 Log.i(TAG, "SC-200 location: ${result.status.name}")
                 updateSession(startedAt) { it.withLocationStatus(result.status) }
                 val point = result.location
-                val wantAddress = _uiState.value.accidentSession?.addressRequested == true
-                if (result.status == LocationStatus.OK && point != null && wantAddress) {
-                    val address = AddressResolver().resolve(point.latitude, point.longitude)
-                    Log.i(TAG, "SC-200 address: ${address.status.name}")
-                    updateSession(startedAt) { it.withAddress(address) }
+                val current = _uiState.value.accidentSession
+                val wantAddress = current?.addressRequested == true
+                val wantWeather = current?.weatherRequested == true
+                if (result.status == LocationStatus.OK && point != null && (wantAddress || wantWeather)) {
+                    val latitude = point.latitude
+                    val longitude = point.longitude
+                    coroutineScope {
+                        if (wantAddress) launch { resolveAddress(startedAt, latitude, longitude) }
+                        if (wantWeather) launch { resolveWeather(startedAt, latitude, longitude) }
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -383,10 +393,36 @@ class MainViewModel(application: Application) :
                 Log.w(TAG, "SC-200 location failed: ${e.javaClass.simpleName}")
                 updateSession(startedAt) { session ->
                     if (session.locationStatus == null) session.withLocationStatus(LocationStatus.ERROR)
-                    else session.withAddress(AddressResult(AddressStatus.ERROR))
+                    else session.withAddress(AddressResult(AddressStatus.ERROR)).withWeather(WeatherResult(WeatherStatus.ERROR))
                 }
             }
         }
+    }
+
+    /** 주소 1회 조회. 예외는 여기서 잡고 실패하면 ERROR로 둔다(좌표는 이 호출에만 쓴다). */
+    private suspend fun resolveAddress(startedAt: Long, latitude: Double, longitude: Double) {
+        val address = try {
+            AddressResolver().resolve(latitude, longitude)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AddressResult(AddressStatus.ERROR)
+        }
+        Log.i(TAG, "SC-200 address: ${address.status.name}")
+        updateSession(startedAt) { it.withAddress(address) }
+    }
+
+    /** 날씨 1회 조회(Open-Meteo, 좌표 소수점 2자리). 예외는 여기서 잡고 실패하면 ERROR로 둔다. 로그에는 결과 종류만 남긴다. */
+    private suspend fun resolveWeather(startedAt: Long, latitude: Double, longitude: Double) {
+        val weather = try {
+            WeatherResolver().resolve(latitude, longitude)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            WeatherResult(WeatherStatus.ERROR)
+        }
+        Log.i(TAG, "SC-200 weather: ${weather.status.name}")
+        updateSession(startedAt) { it.withWeather(weather) }
     }
 
     /** 시작 시각이 같은 세션일 때만 바꾼다(세션이 끝났거나 새로 시작됐으면 결과를 버린다). */

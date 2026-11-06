@@ -120,7 +120,7 @@ fun ConsentScreen(
         Spacer(Modifier.height(8.dp))
         Box(modifier = Modifier.fillMaxWidth().height(NETWORK_NOTICE_HEIGHT), contentAlignment = Alignment.CenterStart) {
             if (network) {
-                Text("켜면 사고 위치를 주소 조회 서버로 보내요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
+                Text("켜면 사고 위치를 주소·날씨 조회 서버로 보내요", style = PitCrewTheme.typography.caption, color = colors.textSecondary)
             }
         }
         Spacer(Modifier.height(16.dp))

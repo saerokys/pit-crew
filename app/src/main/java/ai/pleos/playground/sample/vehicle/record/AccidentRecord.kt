@@ -4,29 +4,32 @@ import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.session.AllChecklists
 import ai.pleos.playground.sample.vehicle.ui.summary.AddressUi
 import ai.pleos.playground.sample.vehicle.ui.summary.LocationUi
+import ai.pleos.playground.sample.vehicle.ui.summary.WeatherUi
 import ai.pleos.playground.sample.vehicle.ui.summary.OSM_CREDIT
 import ai.pleos.playground.sample.vehicle.ui.summary.addressText
 import ai.pleos.playground.sample.vehicle.ui.summary.addressUi
 import ai.pleos.playground.sample.vehicle.ui.summary.locationUi
+import ai.pleos.playground.sample.vehicle.ui.summary.weatherUi
 import ai.pleos.playground.sample.vehicle.vehicle.Reading
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 
 /**
  * SC-270 [기록 저장]으로 기기에 남기는 사고 기록 패키지(SPEC 1.2, PLAN Phase 10).
- * 항목은 사고 시각, 위치·주소, 차량 상태, 안내 이행 네 가지뿐이다.
+ * 항목은 사고 시각, 위치·주소, 날씨, 차량 상태, 안내 이행이다(날씨는 형식 버전 2부터).
  * 좌표, 부상 응답, 상대방 정보, 사진, 차대번호는 세션에서도 가져오지 않고 이 형식에 칸이 없다.
- * 날씨와 음성 메모는 Phase 11에서 만들어지면 그때 추가한다.
+ * 음성 메모는 사고 기록에 넣지 않는다(PROGRESS 결정 기록, 세션 메모리에만 둔다).
  *
  * 순수 Kotlin 값(Map, List, 숫자, 문자열, null)으로 만들어 JVM 단위 테스트로 확인하고,
  * JSON 변환은 [RecordStore]가 한다.
  */
 object AccidentRecord {
     /** 저장 형식 번호. 내용 항목이 아니라 형식이 바뀔 때를 위한 값이다. */
-    const val FORMAT_VERSION = 1
+    const val FORMAT_VERSION = 2
 
     const val KEY_VERSION = "version"
     const val KEY_STARTED_AT = "startedAt"
     const val KEY_LOCATION = "location"
+    const val KEY_WEATHER = "weather"
     const val KEY_VEHICLE = "vehicle"
     const val KEY_CHECKS = "checks"
 
@@ -40,11 +43,17 @@ object AccidentRecord {
     const val ADDRESS_UNAVAILABLE = "UNAVAILABLE"
     const val ADDRESS_OK = "OK"
 
+    /** 날씨 항목 값. 쓰지 않았으면 NOT_USED, 읽지 못했거나 조회 전이면 UNAVAILABLE, 성공했으면 OK(이때만 조건과 온도가 있다). */
+    const val WEATHER_NOT_USED = "NOT_USED"
+    const val WEATHER_UNAVAILABLE = "UNAVAILABLE"
+    const val WEATHER_OK = "OK"
+
     /** 세션에서 저장할 값만 뽑는다. */
     fun from(session: AccidentSession): Map<String, Any?> = linkedMapOf(
         KEY_VERSION to FORMAT_VERSION,
         KEY_STARTED_AT to session.startedAtMillis,
         KEY_LOCATION to locationPart(session),
+        KEY_WEATHER to weatherPart(session),
         KEY_VEHICLE to session.vehicle?.let(::vehiclePart),
         KEY_CHECKS to checksPart(session)
     )
@@ -70,6 +79,21 @@ object AccidentRecord {
             "addressStatus" to addressState,
             "address" to address,
             "addressCredit" to if (address != null) OSM_CREDIT else null
+        )
+    }
+
+    private fun weatherPart(session: AccidentSession): Map<String, Any?> {
+        val ui = weatherUi(session)
+        val status = when (ui) {
+            null -> WEATHER_NOT_USED
+            WeatherUi.OK -> WEATHER_OK
+            else -> WEATHER_UNAVAILABLE
+        }
+        val ok = status == WEATHER_OK
+        return linkedMapOf(
+            "status" to status,
+            "condition" to if (ok) session.weather?.condition else null,
+            "temperatureC" to if (ok) session.weather?.temperatureC else null
         )
     }
 

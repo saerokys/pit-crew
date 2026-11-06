@@ -219,6 +219,21 @@ object PitCrewIcons {
         }
     }
 
+    /** 날씨(SC-250) */
+    val Sun: ImageVector by lazy {
+        icon("Sun") {
+            circle(12f, 12f, 4.2f)
+            moveTo(12f, 2.5f); lineTo(12f, 4.8f)
+            moveTo(12f, 19.2f); lineTo(12f, 21.5f)
+            moveTo(2.5f, 12f); lineTo(4.8f, 12f)
+            moveTo(19.2f, 12f); lineTo(21.5f, 12f)
+            moveTo(5.3f, 5.3f); lineTo(6.9f, 6.9f)
+            moveTo(17.1f, 17.1f); lineTo(18.7f, 18.7f)
+            moveTo(18.7f, 5.3f); lineTo(17.1f, 6.9f)
+            moveTo(6.9f, 17.1f); lineTo(5.3f, 18.7f)
+        }
+    }
+
     /** 사고 장소 */
     val Pin: ImageVector by lazy {
         icon("Pin") {

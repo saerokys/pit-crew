@@ -11,6 +11,8 @@ import ai.pleos.playground.sample.vehicle.vehicle.AreaNames
 import ai.pleos.playground.sample.vehicle.vehicle.Reading
 import ai.pleos.playground.sample.vehicle.vehicle.SupportState
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
+import ai.pleos.playground.sample.vehicle.weather.WeatherFormat
+import ai.pleos.playground.sample.vehicle.weather.WeatherStatus
 
 /**
  * SC-260 요약에 쓰는 문장을 세션에서 만든다(화면 표시용, 저장·전송하지 않음).
@@ -87,6 +89,31 @@ fun addressUi(session: AccidentSession?): AddressUi? {
     val address = session.address ?: return AddressUi.PENDING
     return if (address.status == AddressStatus.OK && !address.text.isNullOrBlank()) AddressUi.OK else AddressUi.FAILED
 }
+
+/**
+ * 날씨 카드 표시 상태. null이면 카드를 보이지 않는다(위치를 껐거나 네트워크를 껐을 때).
+ * 위치와 네트워크를 모두 켠 경우: 조회 전·위치를 읽는 중이면 PENDING, 값이 오면 OK, 위치를 읽지 못했거나 조회에 실패하면 FAILED.
+ */
+enum class WeatherUi { PENDING, OK, FAILED }
+
+fun weatherUi(session: AccidentSession?): WeatherUi? {
+    if (session == null || !session.weatherRequested || !session.locationRequested) return null
+    val weather = session.weather
+    if (weather != null) {
+        return if (weather.status == WeatherStatus.OK && WeatherFormat.displayText(weather) != null) WeatherUi.OK else WeatherUi.FAILED
+    }
+    return when (locationUi(session)) {
+        LocationUi.UNAVAILABLE -> WeatherUi.FAILED // 좌표가 없어 조회하지 않는다
+        else -> WeatherUi.PENDING
+    }
+}
+
+/** 날씨 한 줄 "맑음 18°C"(조회에 성공했을 때만). */
+fun weatherText(session: AccidentSession?): String? =
+    if (weatherUi(session) == WeatherUi.OK) WeatherFormat.displayText(session?.weather) else null
+
+/** 날씨 출처 표기(CC BY 4.0). 날씨 값이 보이는 화면마다 함께 보여 준다. */
+const val WEATHER_CREDIT = "Weather data by Open-Meteo.com"
 
 /** 주소 문자열(조회에 성공했을 때만). */
 fun addressText(session: AccidentSession?): String? =
