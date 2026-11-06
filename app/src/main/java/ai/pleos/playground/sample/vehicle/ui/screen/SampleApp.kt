@@ -3,6 +3,7 @@ package ai.pleos.playground.sample.vehicle.ui.screen
 import ai.pleos.playground.sample.vehicle.BuildConfig
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
 import androidx.activity.compose.BackHandler
+import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
 import ai.pleos.playground.sample.vehicle.session.InjuryAnswer
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.data.AppPage
@@ -65,6 +66,8 @@ fun SampleApp(
     onToggleSpeech: (String) -> Unit,
     onStopSpeech: () -> Unit,
     onReleaseSpeech: () -> Unit,
+    onToggleInsurerItem: (InsurerItem) -> Unit,
+    onSendInsurer: () -> Unit,
     onStartVoice: () -> Unit,
     onStopVoice: () -> Unit,
     onSaveVoice: () -> Unit,
@@ -150,6 +153,11 @@ fun SampleApp(
                     voiceState = uiState.voiceState,
                     voiceDraft = uiState.voiceDraft,
                     voiceDraftCut = uiState.voiceDraftCut,
+                    insurerUnchecked = uiState.insurerUnchecked,
+                    insurerSendState = uiState.insurerSendState,
+                    insurerLastSent = uiState.insurerLastSent,
+                    onToggleInsurerItem = onToggleInsurerItem,
+                    onSendInsurer = onSendInsurer,
                     voiceNotHeard = uiState.voiceNotHeard,
                     onStartVoice = onStartVoice,
                     onStopVoice = onStopVoice,

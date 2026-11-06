@@ -21,6 +21,9 @@ import ai.pleos.playground.sample.vehicle.tts.SpeechTexts
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewButton
 import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.settings.Consent
+import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
+import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerScreen
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentScreen
 import ai.pleos.playground.sample.vehicle.ui.ending.EndingScreen
@@ -72,6 +75,7 @@ enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?)
     OTHER_PARTY("SC-240", "상대방 정보 확인", 5),
     VEHICLE_STATE("SC-250", "차량 상태 기록", 6),
     SUMMARY("SC-260", "접수 요약", 7),
+    INSURER("SC-290", "가상 보험사 전달", 7),
     ENDING("SC-270", "종료와 기록 처리", 7),
     PRE_DEPARTURE("SC-300", "출발 전 점검", null),
     VEHICLE_LINK("SC-400", "차량 연동 상태", null),
@@ -141,6 +145,11 @@ fun PitCrewNavHost(
     voiceState: VoiceState,
     voiceDraft: String?,
     voiceDraftCut: Boolean,
+    insurerUnchecked: Set<InsurerItem>,
+    insurerSendState: InsurerSendState,
+    insurerLastSent: Set<InsurerItem>,
+    onToggleInsurerItem: (InsurerItem) -> Unit,
+    onSendInsurer: () -> Unit,
     voiceNotHeard: Boolean,
     onStartVoice: () -> Unit,
     onStopVoice: () -> Unit,
@@ -288,6 +297,14 @@ fun PitCrewNavHost(
                     onReread = onReadVehicle
                 )
                 PitCrewRoute.SUMMARY -> SummaryScreen(session = session)
+                PitCrewRoute.INSURER -> InsurerScreen(
+                    session = session,
+                    unchecked = insurerUnchecked,
+                    sendState = insurerSendState,
+                    lastSent = insurerLastSent,
+                    onToggle = onToggleInsurerItem,
+                    onSend = onSendInsurer
+                )
                 PitCrewRoute.ENDING -> EndingScreen(
                     session = session,
                     saveState = saveState,
@@ -339,6 +356,13 @@ fun PitCrewNavHost(
                     navigator.replaceTop(PitCrewRoute.STOP_CHECK)
                 }
             )
+        } else if (route == PitCrewRoute.INSURER) {
+            // SC-290: [이전]과 [다음](SC-270). 보내기 전에도 [다음]으로 갈 수 있다. 채운 버튼은 보낸 뒤의 [다음] 하나뿐이다.
+            PitCrewBottomBar(
+                onPrevious = { goBack() },
+                onNext = { navigator.push(PitCrewRoute.ENDING) },
+                nextFilled = !session?.insurerReceipts.isNullOrEmpty()
+            )
         } else if (route == PitCrewRoute.ENDING) {
             // SC-270: 저장하기 전에는 [이전]만(저장은 화면 안 큰 버튼). 저장한 뒤에는 [홈으로]만 화면 안에 있어 하단 바에는 버튼이 없다.
             PitCrewBottomBar(
@@ -363,7 +387,12 @@ fun PitCrewNavHost(
                     route == PitCrewRoute.EMERGENCY -> "확인했어요"
                     navigator.next() == null -> "마치기"
                     else -> "다음"
-                }
+                },
+                // SC-260: 왼쪽에 기본 버튼 [보험사로 전달](채운 버튼은 [다음] 하나). 너비는 둘이 한 줄에 들어가게 줄인다.
+                extraLabel = if (route == PitCrewRoute.SUMMARY) "보험사로 전달" else null,
+                onExtra = if (route == PitCrewRoute.SUMMARY) ({ navigator.push(PitCrewRoute.INSURER) }) else null,
+                extraIcon = PitCrewIcons.Send,
+                nextWidth = if (route == PitCrewRoute.SUMMARY) PitCrewDimens.recheckButtonWidth else PitCrewDimens.nextButtonWidth
             )
         }
     }

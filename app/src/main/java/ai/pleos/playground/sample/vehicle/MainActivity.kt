@@ -48,6 +48,8 @@ class MainActivity : ComponentActivity() {
                     onToggleSpeech = viewModel::toggleSpeech,
                     onStopSpeech = viewModel::stopSpeech,
                     onReleaseSpeech = { viewModel.releaseSpeech() },
+                    onToggleInsurerItem = viewModel::toggleInsurerItem,
+                    onSendInsurer = viewModel::sendToInsurer,
                     onStartVoice = viewModel::startVoiceMemo,
                     onStopVoice = viewModel::stopVoiceMemo,
                     onSaveVoice = viewModel::confirmVoiceMemo,

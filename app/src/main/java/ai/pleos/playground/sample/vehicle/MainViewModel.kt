@@ -22,6 +22,9 @@ import ai.pleos.playground.sample.vehicle.address.AddressStatus
 import ai.pleos.playground.sample.vehicle.location.LocationReader
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.location.isLocationSupported
+import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.insurer.InsurerPackage
+import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.AccidentRecord
 import ai.pleos.playground.sample.vehicle.record.RecordStore
 import ai.pleos.playground.sample.vehicle.record.SaveState
@@ -62,6 +65,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -93,6 +97,7 @@ class MainViewModel(application: Application) :
     private var preCheckJob: Job? = null
     private var locationJob: Job? = null
     private var saveJob: Job? = null
+    private var insurerJob: Job? = null
     // 기능 지원 확인(capability) 호출을 한 번에 하나만 하게 한다(시작 확인, 재확인, SC-400 [다시 확인]이 겹치지 않게).
     private val supportMutex = Mutex()
     // 시작 때 UNKNOWN인 기능을 다시 확인하는 일은 앱을 켜고 한 번만 한다.
@@ -541,9 +546,60 @@ class MainViewModel(application: Application) :
         readJob?.cancel()
         locationJob?.cancel()
         saveJob?.cancel()
+        insurerJob?.cancel()
         _uiState.update {
-            if (it.accidentSession == null && !it.isReadingVehicle && it.saveState == SaveState.IDLE) it
-            else it.copy(accidentSession = null, isReadingVehicle = false, saveState = SaveState.IDLE)
+            if (it.accidentSession == null && !it.isReadingVehicle && it.saveState == SaveState.IDLE &&
+                it.insurerSendState == InsurerSendState.IDLE && it.insurerUnchecked.isEmpty() && it.insurerLastSent.isEmpty()
+            ) it
+            else it.copy(
+                accidentSession = null,
+                isReadingVehicle = false,
+                saveState = SaveState.IDLE,
+                insurerUnchecked = emptySet(),
+                insurerSendState = InsurerSendState.IDLE,
+                insurerLastSent = emptySet()
+            )
+        }
+    }
+
+    /** SC-290 항목 체크 켜고 끄기. 고를 수 없는 항목(값이 없음)은 바꾸지 않는다. */
+    fun toggleInsurerItem(item: InsurerItem) {
+        _uiState.update { state ->
+            val session = state.accidentSession ?: return@update state
+            if (item !in InsurerPackage.available(session)) state
+            else state.copy(
+                insurerUnchecked = if (item in state.insurerUnchecked) state.insurerUnchecked - item else state.insurerUnchecked + item
+            )
+        }
+    }
+
+    /**
+     * SC-290 [보내기]: 사용자가 누를 때만, 앱 안 모의 처리로 접수 한 건을 만든다(외부 호출 없음, 모의 지연 0.8초).
+     * 고른 항목이 없거나, 같은 항목을 이미 보냈거나, 보내는 중이면 아무것도 하지 않는다.
+     * 로그에는 결과 종류와 항목 개수만 남긴다(값 제외).
+     */
+    fun sendToInsurer() {
+        val state = _uiState.value
+        val session = state.accidentSession ?: return
+        if (state.insurerSendState == InsurerSendState.SENDING) return
+        val selected = InsurerPackage.selected(session, state.insurerUnchecked)
+        if (selected.isEmpty()) return
+        if (state.insurerSendState == InsurerSendState.SENT && selected == state.insurerLastSent) return
+        _uiState.update { it.copy(insurerSendState = InsurerSendState.SENDING) }
+        val startedAt = session.startedAtMillis
+        insurerJob = viewModelScope.launch {
+            try {
+                delay(800)
+                val receipt = InsurerPackage.receipt(session, selected, System.currentTimeMillis(), kotlin.random.Random.nextInt(10_000))
+                updateSession(startedAt) { it.withInsurerReceipt(receipt) }
+                _uiState.update { it.copy(insurerSendState = InsurerSendState.SENT, insurerLastSent = selected) }
+                Log.i(TAG, "SC-290 send: OK items=${selected.size}")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "SC-290 send: FAILED ${e.javaClass.simpleName}")
+                _uiState.update { it.copy(insurerSendState = InsurerSendState.FAILED) }
+            }
         }
     }
 

@@ -118,7 +118,8 @@ fun PitCrewTopBar(
 /**
  * 하단 바(높이 128, bar 색): 왼쪽 [이전](기본 버튼), 오른쪽 가장 큰 [다음](채운 주요 버튼).
  * [onPrevious]가 null이면 [이전]을, [onNext]가 null이면 [다음]을 그리지 않는다(선택 버튼으로만 이동하는 화면).
- * 채운 버튼은 이 [다음] 하나뿐이다.
+ * 채운 버튼은 이 [다음] 하나뿐이다([nextFilled]가 거짓이면 기본 버튼, SC-290에서 보내기 전).
+ * [extraLabel]이 있으면 [다음] 왼쪽에 기본 버튼을 하나 더 둔다(SC-260의 [보험사로 전달]).
  */
 @Composable
 fun PitCrewBottomBar(
@@ -131,7 +132,12 @@ fun PitCrewBottomBar(
     previousWidth: Dp = PitCrewDimens.prevButtonWidth,
     nextIcon: ImageVector? = PitCrewIcons.ChevronRight,
     nextWidth: Dp = PitCrewDimens.nextButtonWidth,
-    nextEnabled: Boolean = true
+    nextEnabled: Boolean = true,
+    nextFilled: Boolean = true,
+    extraLabel: String? = null,
+    onExtra: (() -> Unit)? = null,
+    extraIcon: ImageVector? = null,
+    extraWidth: Dp = PitCrewDimens.recheckButtonWidth
 ) {
     Row(
         modifier = modifier
@@ -150,11 +156,21 @@ fun PitCrewBottomBar(
             )
         }
         Spacer(Modifier.weight(1f))
+        if (extraLabel != null && onExtra != null) {
+            // 기본 버튼(채운 버튼은 [다음] 하나뿐). 터치 영역 높이 96, 오른쪽 [다음]과 간격 24.
+            PitCrewButton(
+                text = extraLabel,
+                onClick = onExtra,
+                leadingIcon = extraIcon,
+                modifier = Modifier.width(extraWidth)
+            )
+            Spacer(Modifier.width(PitCrewDimens.touchGap))
+        }
         if (onNext != null) {
             PitCrewButton(
                 text = nextLabel,
                 onClick = onNext,
-                filled = true,
+                filled = nextFilled,
                 enabled = nextEnabled,
                 trailingIcon = nextIcon,
                 modifier = Modifier.width(nextWidth)

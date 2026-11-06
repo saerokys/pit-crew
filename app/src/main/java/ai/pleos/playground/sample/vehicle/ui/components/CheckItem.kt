@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,8 @@ import androidx.compose.ui.unit.dp
  * [compact]는 항목이 5개인 SC-230용: 행 최소 높이 112, 글자 36 Bold.
  * 미체크: surface 배경, divider 테두리의 빈 체크박스.
  * 체크: accent 테두리, accent로 채운 체크박스와 체크 표시.
+ * [dense]는 항목이 6개인 SC-290용: 행 최소 높이 96(터치 영역 최소), 글자 36 Bold.
+ * [enabled]가 거짓이면 고를 수 없는 항목(회색 글자, 체크 불가)이고 [note]에 이유를 보여 준다.
  */
 @Composable
 fun CheckItem(
@@ -36,29 +39,37 @@ fun CheckItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    compact: Boolean = false
+    compact: Boolean = false,
+    dense: Boolean = false,
+    enabled: Boolean = true,
+    note: String? = null
 ) {
     val colors = PitCrewTheme.colors
     val boxShape = RoundedCornerShape(PitCrewDimens.checkboxCorner)
-    val line = if (checked) colors.accent else colors.divider
+    val line = if (checked && enabled) colors.accent else colors.divider
+    val minHeight = when {
+        dense -> PitCrewDimens.touchMin
+        compact -> PitCrewDimens.checkItemCompactMinHeight
+        else -> PitCrewDimens.checkItemMinHeight
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = if (compact) PitCrewDimens.checkItemCompactMinHeight else PitCrewDimens.checkItemMinHeight)
+            .heightIn(min = minHeight)
             .background(colors.surface, PitCrewShapes.card)
             .border(BorderStroke(PitCrewDimens.cardBorder, line), PitCrewShapes.card)
-            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
-            .padding(horizontal = 32.dp, vertical = if (compact) 24.dp else 40.dp),
+            .toggleable(enabled = enabled, value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+            .padding(horizontal = 32.dp, vertical = if (dense) 16.dp else if (compact) 24.dp else 40.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(PitCrewDimens.checkboxSize)
-                .background(if (checked) colors.accent else colors.surface, boxShape)
+                .background(if (checked && enabled) colors.accent else colors.surface, boxShape)
                 .border(BorderStroke(PitCrewDimens.cardBorder, line), boxShape),
             contentAlignment = Alignment.Center
         ) {
-            if (checked) {
+            if (checked && enabled) {
                 Icon(
                     PitCrewIcons.Check,
                     contentDescription = null,
@@ -68,10 +79,15 @@ fun CheckItem(
             }
         }
         Spacer(Modifier.width(24.dp))
-        Text(
-            text,
-            style = if (compact) PitCrewTheme.typography.cardTitle else PitCrewTheme.typography.checkItem,
-            color = colors.textPrimary
-        )
+        Column {
+            Text(
+                text,
+                style = if (compact || dense) PitCrewTheme.typography.cardTitle else PitCrewTheme.typography.checkItem,
+                color = if (enabled) colors.textPrimary else colors.textDisabled
+            )
+            if (note != null) {
+                Text(note, style = PitCrewTheme.typography.caption, color = colors.textDisabled)
+            }
+        }
     }
 }

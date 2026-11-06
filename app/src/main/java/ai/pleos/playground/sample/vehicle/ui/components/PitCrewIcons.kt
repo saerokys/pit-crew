@@ -219,6 +219,31 @@ object PitCrewIcons {
         }
     }
 
+    /** 보내기(SC-260, SC-290) */
+    val Send: ImageVector by lazy {
+        icon("Send") {
+            moveTo(21f, 3f); lineTo(10f, 14f)
+            moveTo(21f, 3f); lineTo(14.5f, 21f); lineTo(10f, 14f); lineTo(3f, 9.5f); close()
+        }
+    }
+
+    /** 시각(SC-290 사고 시각) */
+    val Clock: ImageVector by lazy {
+        icon("Clock") {
+            circle(12f, 12f, 9.5f)
+            moveTo(12f, 6.5f); lineTo(12f, 12f); lineTo(15.8f, 14.2f)
+        }
+    }
+
+    /** 시연용 가상 보험사 배지(SC-290) */
+    val Building: ImageVector by lazy {
+        icon("Building") {
+            moveTo(3f, 10.5f); lineTo(12f, 3.5f); lineTo(21f, 10.5f)
+            moveTo(5.5f, 9f); lineTo(5.5f, 20.5f); lineTo(18.5f, 20.5f); lineTo(18.5f, 9f)
+            moveTo(10f, 20.5f); lineTo(10f, 14f); lineTo(14f, 14f); lineTo(14f, 20.5f)
+        }
+    }
+
     /** 날씨(SC-250) */
     val Sun: ImageVector by lazy {
         icon("Sun") {

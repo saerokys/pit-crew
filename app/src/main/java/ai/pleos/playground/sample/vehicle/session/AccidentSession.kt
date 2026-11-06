@@ -1,6 +1,7 @@
 package ai.pleos.playground.sample.vehicle.session
 
 import ai.pleos.playground.sample.vehicle.address.AddressResult
+import ai.pleos.playground.sample.vehicle.insurer.InsurerReceipt
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import ai.pleos.playground.sample.vehicle.weather.WeatherResult
@@ -37,8 +38,11 @@ data class AccidentSession(
      * 음성 메모(SC-230, 사용자가 확인하고 [저장]한 한 건, 최대 100자). 세션 메모리에만 두고 디스크에 쓰지 않으며
      * 사고 기록(SC-270 저장 JSON)에도 넣지 않는다(결정 A). 홈으로 가면 세션과 함께 사라진다. 로그에는 글자 수만 남긴다.
      */
-    val voiceMemo: String? = null
+    val voiceMemo: String? = null,
+    /** SC-290 시연용 접수 로그(접수 번호, 보낸 시각, 항목 이름만). 세션 메모리에만 두고 사고 기록(SC-270)에 넣지 않는다. */
+    val insurerReceipts: List<InsurerReceipt> = emptyList()
 ) {
+    fun withInsurerReceipt(receipt: InsurerReceipt): AccidentSession = copy(insurerReceipts = insurerReceipts + receipt)
     fun withWeather(result: WeatherResult): AccidentSession = copy(weather = result)
     fun withVoiceMemo(text: String): AccidentSession = copy(voiceMemo = text)
     fun withLocationStatus(status: LocationStatus): AccidentSession = copy(locationStatus = status)

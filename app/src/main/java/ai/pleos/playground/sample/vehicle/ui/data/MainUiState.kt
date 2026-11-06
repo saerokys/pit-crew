@@ -6,6 +6,8 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiFeatureDescriptor
 import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
+import ai.pleos.playground.sample.vehicle.insurer.InsurerItem
+import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
@@ -52,6 +54,11 @@ data class MainUiState(
     val voiceDraftCut: Boolean = false,
     /** 방금 못 알아들어 대기로 돌아왔는지("잘 듣지 못했어요. 다시 말해 주세요."). 다시 말하기를 누르거나 화면을 떠나면 지운다. */
     val voiceNotHeard: Boolean = false,
+    /** SC-290에서 사용자가 끈 항목(기본은 고를 수 있는 항목 모두 켜짐). 세션과 함께 사라진다. */
+    val insurerUnchecked: Set<InsurerItem> = emptySet(),
+    val insurerSendState: InsurerSendState = InsurerSendState.IDLE,
+    /** 마지막으로 보낸 항목(같은 항목으로 다시 보내지 않게 한다). */
+    val insurerLastSent: Set<InsurerItem> = emptySet(),
     /** SC-205 동의 상태(앱을 껐다 켜도 유지, 값은 스위치 3개뿐). */
     val consent: Consent = Consent(),
     /** 이 차량에 위치 서비스가 있는지(isSupported). 없으면 SC-205 위치 스위치가 회색이다. */
