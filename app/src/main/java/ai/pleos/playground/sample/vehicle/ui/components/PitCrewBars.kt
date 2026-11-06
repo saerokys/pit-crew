@@ -120,6 +120,8 @@ fun PitCrewTopBar(
  * [onPrevious]가 null이면 [이전]을, [onNext]가 null이면 [다음]을 그리지 않는다(선택 버튼으로만 이동하는 화면).
  * 채운 버튼은 이 [다음] 하나뿐이다([nextFilled]가 거짓이면 기본 버튼, SC-290에서 보내기 전).
  * [extraLabel]이 있으면 [다음] 왼쪽에 기본 버튼을 하나 더 둔다(SC-260의 [보험사로 전달]).
+ * [centerText]가 있으면 버튼 사이 빈 칸 가운데에 안내 글자(글자 28, textSecondary)를 둔다(SC-280의 "참고용" 문구).
+ * 기본값은 null이라 쓰지 않는 화면은 모양이 그대로다. 두 줄까지 들어간다.
  */
 @Composable
 fun PitCrewBottomBar(
@@ -137,7 +139,9 @@ fun PitCrewBottomBar(
     extraLabel: String? = null,
     onExtra: (() -> Unit)? = null,
     extraIcon: ImageVector? = null,
-    extraWidth: Dp = PitCrewDimens.recheckButtonWidth
+    extraWidth: Dp = PitCrewDimens.recheckButtonWidth,
+    centerText: String? = null,
+    centerIcon: ImageVector? = null
 ) {
     Row(
         modifier = modifier
@@ -155,7 +159,21 @@ fun PitCrewBottomBar(
                 modifier = Modifier.width(previousWidth)
             )
         }
-        Spacer(Modifier.weight(1f))
+        if (centerText != null) {
+            Row(
+                modifier = Modifier.weight(1f).padding(horizontal = PitCrewDimens.touchGap),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (centerIcon != null) {
+                    Icon(centerIcon, contentDescription = null, tint = PitCrewTheme.colors.textSecondary, modifier = Modifier.size(PitCrewDimens.iconSize))
+                    Spacer(Modifier.width(16.dp))
+                }
+                Text(centerText, style = PitCrewTheme.typography.caption, color = PitCrewTheme.colors.textSecondary, modifier = Modifier.weight(1f, fill = false))
+            }
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
         if (extraLabel != null && onExtra != null) {
             // 기본 버튼(채운 버튼은 [다음] 하나뿐). 터치 영역 높이 96, 오른쪽 [다음]과 간격 24.
             PitCrewButton(

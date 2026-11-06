@@ -26,6 +26,7 @@ import ai.pleos.playground.sample.vehicle.navi.DestinationCategory
 import ai.pleos.playground.sample.vehicle.navi.NaviState
 import ai.pleos.playground.sample.vehicle.navi.RouteResult
 import ai.pleos.playground.sample.vehicle.ui.destination.DestinationScreen
+import ai.pleos.playground.sample.vehicle.ui.destination.DestinationTexts
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerScreen
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
@@ -390,7 +391,13 @@ fun PitCrewNavHost(
             )
         } else if (route == PitCrewRoute.DESTINATION) {
             // SC-280: [이전](SC-270)만. 저장하지 않은 채 홈으로 가 버리지 않게 [홈으로]를 두지 않는다. 채운 버튼은 [길안내 시작] 하나뿐이다.
-            PitCrewBottomBar(onPrevious = { goBack() }, onNext = null)
+            // 빈 가운데 칸에 "참고용 안내예요…" 문구를 둔다(화면 안 세로 공간을 확보하려고 아래쪽에서 옮김).
+            PitCrewBottomBar(
+                onPrevious = { goBack() },
+                onNext = null,
+                centerText = DestinationTexts.DISCLAIMER,
+                centerIcon = PitCrewIcons.Info
+            )
         } else if (route == PitCrewRoute.ENDING) {
             // SC-270: 저장하기 전에는 [이전]과 기본 버튼 [다음 장소 안내](SC-280). 저장은 화면 안 큰 버튼이고,
             // 저장한 뒤에는 [홈으로]가 화면 안에 있어 [이전]은 없고 [다음 장소 안내]만 남는다. 채운 버튼은 화면 안 하나뿐이다.

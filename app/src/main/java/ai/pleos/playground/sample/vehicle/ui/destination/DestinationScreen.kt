@@ -23,12 +23,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** SC-280 화면 문구. 모든 글자는 28 이상이다. */
+/** SC-280 화면 문구. 모든 글자는 28 이상이다. [DISCLAIMER]는 하단 바 가운데에 쓴다(PitCrewNav). */
 object DestinationTexts {
     const val TITLE = "어디로 갈까요?"
     const val CANDIDATES = "예시 후보"
@@ -54,6 +53,7 @@ object DestinationTexts {
     const val UNAVAILABLE = "길안내를 쓸 수 없어요"
     const val ERROR = "길안내를 시작하지 못했어요"
     const val UNCONFIRMED = "길안내가 시작됐는지 확인하지 못했어요"
+    const val UNCONFIRMED_HINT = "내비게이션 앱이 열려 있는지 확인해 주세요."
     const val STARTED = "길안내를 시작했어요"
     const val NO_CANDIDATES = "후보를 찾지 못했어요"
     const val DISCLAIMER = "참고용 안내예요. 길안내는 직접 확인하고 판단하세요. 법률·의료 조언이 아니에요."
@@ -119,14 +119,20 @@ fun DestinationScreen(
             // 오른쪽: 예시 후보, 안내, [길안내 시작]
             PitCrewCard(modifier = Modifier.weight(1f).fillMaxHeight(), padding = 24.dp) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Column(modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
-                        Text(
-                            "${DestinationTexts.CANDIDATES} ${places.size}곳",
-                            style = PitCrewTheme.typography.cardTitle,
-                            color = colors.textPrimary
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        NoticeLine(PitCrewIcons.Info, colors.textSecondary, DestinationTexts.EXAMPLE_NOTICE, bold = true)
+                    // 스크롤은 쓰지 않는다. 후보 3개, 119, 상태 줄, 버튼이 한 화면에 모두 들어가야 한다.
+                    Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        // 제목과 "시연용 예시 장소예요…"를 한 줄에 둔다(세로 공간을 아끼려고). 좁으면 안내 쪽이 줄바꿈된다.
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "${DestinationTexts.CANDIDATES} ${places.size}곳",
+                                style = PitCrewTheme.typography.cardTitle,
+                                color = colors.textPrimary
+                            )
+                            Spacer(Modifier.width(PitCrewDimens.touchGap))
+                            Box(modifier = Modifier.weight(1f)) {
+                                NoticeLine(PitCrewIcons.Info, colors.textSecondary, DestinationTexts.EXAMPLE_NOTICE, bold = true)
+                            }
+                        }
                         Spacer(Modifier.height(12.dp))
                         if (places.isEmpty()) {
                             NoticeLine(PitCrewIcons.Warning, colors.statusWarn, DestinationTexts.NO_CANDIDATES, bold = true)
@@ -160,21 +166,23 @@ fun DestinationScreen(
                         leadingIcon = PitCrewIcons.Send,
                         modifier = Modifier.fillMaxWidth().height(PitCrewDimens.touchMin)
                     )
-                    Spacer(Modifier.height(8.dp))
-                    NoticeLine(PitCrewIcons.Info, colors.textSecondary, DestinationTexts.START_HINT, bold = false)
+                    // "[길안내 시작]을 눌러야만…"는 상태 줄이 없을 때만 보인다(상태 줄이 있으면 이미 눌렀다는 뜻이라 중복).
+                    if (!hasStatusLine(naviState, routeResult)) {
+                        Spacer(Modifier.height(8.dp))
+                        NoticeLine(PitCrewIcons.Info, colors.textSecondary, DestinationTexts.START_HINT, bold = false)
+                    }
                 }
             }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth().heightIn(min = PitCrewDimens.iconSize + 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(PitCrewIcons.Info, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(PitCrewDimens.iconSize))
-            Spacer(Modifier.width(16.dp))
-            Text(DestinationTexts.DISCLAIMER, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
         }
     }
 }
 
 private val CATEGORY_WIDTH = 560.dp
+
+/** 상태 줄이 보이는지(연결 실패, 오류, 확인 못 함, 시작함). */
+private fun hasStatusLine(naviState: NaviState, routeResult: RouteResult): Boolean =
+    naviState == NaviState.UNAVAILABLE ||
+        routeResult == RouteResult.ERROR || routeResult == RouteResult.UNCONFIRMED || routeResult == RouteResult.STARTED
 
 /** 연결·요청 결과 한 줄. 연결 중과 요청 전에는 보이지 않는다. 아이콘과 글자를 함께 쓴다. */
 @Composable
@@ -190,6 +198,11 @@ private fun StatusLine(naviState: NaviState, routeResult: RouteResult) {
     if (line != null) {
         NoticeLine(line.first, line.second, line.third, bold = true)
         Spacer(Modifier.height(12.dp))
+        // 대기가 끝났는데 이벤트가 오지 않은 경우: 내비 앱 화면이 열려 있지 않으면 요청이 버려진다(PROGRESS 5절).
+        if (routeResult == RouteResult.UNCONFIRMED && naviState != NaviState.UNAVAILABLE) {
+            NoticeLine(PitCrewIcons.Info, colors.textSecondary, DestinationTexts.UNCONFIRMED_HINT, bold = false)
+            Spacer(Modifier.height(12.dp))
+        }
     }
 }
 

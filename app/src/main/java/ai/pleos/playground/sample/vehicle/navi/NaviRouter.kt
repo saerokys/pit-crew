@@ -196,7 +196,7 @@ class NaviRouter(context: Context, private val callback: NaviCallback) {
     }
 
     private companion object {
-        /** 길안내 시작 이벤트를 기다리는 시간(SDK의 요청은 반환값이 없어 이벤트로만 안다). */
-        const val RESULT_TIMEOUT_MS = 10_000L
+        /** 길안내 시작 이벤트를 기다리는 시간(SDK의 요청은 반환값이 없어 이벤트로만 안다). 에뮬레이터에서 정상 시작은 요청 뒤 약 6.5~7초라 여유를 두어 15초로 한다. */
+        const val RESULT_TIMEOUT_MS = 15_000L
     }
 }
