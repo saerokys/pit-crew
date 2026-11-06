@@ -201,6 +201,24 @@ object PitCrewIcons {
         }
     }
 
+    /** 기록 저장(SC-270) */
+    val Save: ImageVector by lazy {
+        icon("Save") {
+            moveTo(5f, 3.5f); lineTo(16.5f, 3.5f); lineTo(20.5f, 7.5f); lineTo(20.5f, 20.5f); lineTo(5f, 20.5f); close()
+            moveTo(8f, 3.5f); lineTo(8f, 8.5f); lineTo(15f, 8.5f); lineTo(15f, 3.5f)
+            moveTo(8f, 20.5f); lineTo(8f, 13.5f); lineTo(17.5f, 13.5f); lineTo(17.5f, 20.5f)
+        }
+    }
+
+    /** 저장하지 않고 종료(SC-270) */
+    val Exit: ImageVector by lazy {
+        icon("Exit") {
+            moveTo(10f, 3.5f); lineTo(4f, 3.5f); lineTo(4f, 20.5f); lineTo(10f, 20.5f)
+            moveTo(9f, 12f); lineTo(20f, 12f)
+            moveTo(15f, 7f); lineTo(20f, 12f); lineTo(15f, 17f)
+        }
+    }
+
     /** 사고 장소 */
     val Pin: ImageVector by lazy {
         icon("Pin") {

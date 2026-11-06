@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,9 +38,14 @@ fun DevMenuScreen(
     onOpenApiExplorer: () -> Unit,
     onOpenComponents: () -> Unit,
     onResetConsent: () -> Unit,
+    hasSavedRecord: Boolean,
+    onRefreshSavedRecord: () -> Unit,
+    onDeleteSavedRecord: () -> Unit,
     onBackHome: () -> Unit
 ) {
     var consentCleared by remember { mutableStateOf(false) }
+    // 메뉴를 열 때 저장된 기록이 있는지 확인한다.
+    LaunchedEffect(Unit) { onRefreshSavedRecord() }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -59,6 +65,18 @@ fun DevMenuScreen(
         if (consentCleared) {
             Text("동의 설정을 지웠어요", style = PitCrewTheme.typography.caption, color = PitCrewTheme.colors.textSecondary)
         }
+        // 디버그 전용(Phase 14에서 개발자 도구와 함께 제거): SC-270에서 저장한 사고 기록 파일을 지운다.
+        PitCrewButton(
+            "저장 기록 삭제",
+            onClick = onDeleteSavedRecord,
+            enabled = hasSavedRecord,
+            modifier = Modifier.width(720.dp)
+        )
+        Text(
+            if (hasSavedRecord) "저장된 기록: 있음" else "저장된 기록: 없음",
+            style = PitCrewTheme.typography.caption,
+            color = PitCrewTheme.colors.textSecondary
+        )
         PitCrewButton("홈으로", onClick = onBackHome, modifier = Modifier.width(720.dp))
     }
 }

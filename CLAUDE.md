@@ -62,8 +62,8 @@ Pit Crew는 사고 직후 정차부터 마무리까지 안내하는 Pleos Connec
 
 ## 우선순위
 - P0(1차 제출 필수): SC-000, 100, 200, 210, 220, 221, 230, 240, 250, 260, 300, 400
-- P1-A(1차 제출 전 목표): 위치(FusedLocation), 주소 변환(Nominatim), TTS 음성 안내, 사고 기록 패키지(SC-205, SC-270, SC-290)
-- P1-B: 날씨(Open-Meteo), STT 음성 메모, NaviHelper 길안내(SC-280), 가상 보험사 전송
+- P1-A(1차 제출 전 목표): 위치(FusedLocation), 주소 변환(Nominatim), TTS 음성 안내, 사고 기록 패키지(SC-205, SC-270)
+- P1-B: 날씨(Open-Meteo), STT 음성 메모, NaviHelper 길안내(SC-280), 가상 보험사 전송(SC-290)
 - P1 기타: SC-500, 510, 520
 - P2: 내보내기(PDF), 기록 무결성
 

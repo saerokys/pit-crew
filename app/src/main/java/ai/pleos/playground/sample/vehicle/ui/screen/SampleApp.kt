@@ -53,6 +53,10 @@ fun SampleApp(
     onSetChecked: (String, Boolean) -> Unit,
     onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
+    onSaveRecord: () -> Unit,
+    onResetSaveState: () -> Unit,
+    onRefreshSavedRecord: () -> Unit,
+    onDeleteSavedRecord: () -> Unit,
     onReadVehicle: () -> Unit,
     onCheckPreDeparture: () -> Unit,
     onRecheckLink: () -> Unit,
@@ -104,6 +108,9 @@ fun SampleApp(
                     onOpenApiExplorer = { onOpenDomain(VehicleDomain.DOOR) },
                     onOpenComponents = { onShowDevPage(AppPage.DEV_COMPONENTS) },
                     onResetConsent = onResetConsent,
+                    hasSavedRecord = uiState.hasSavedRecord,
+                    onRefreshSavedRecord = onRefreshSavedRecord,
+                    onDeleteSavedRecord = onDeleteSavedRecord,
                     onBackHome = onShowHome
                 )
             }
@@ -119,6 +126,11 @@ fun SampleApp(
                     onSetChecked = onSetChecked,
                     onSetInjury = onSetInjury,
                     onEndSession = onEndSession,
+                    saveState = uiState.saveState,
+                    hasSavedRecord = uiState.hasSavedRecord,
+                    onSaveRecord = onSaveRecord,
+                    onResetSaveState = onResetSaveState,
+                    onRefreshSavedRecord = onRefreshSavedRecord,
                     isReadingVehicle = uiState.isReadingVehicle,
                     onReadVehicle = onReadVehicle,
                     preCheckSnapshot = uiState.preCheckSnapshot,

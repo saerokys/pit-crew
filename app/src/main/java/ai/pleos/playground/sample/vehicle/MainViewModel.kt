@@ -22,6 +22,9 @@ import ai.pleos.playground.sample.vehicle.address.AddressStatus
 import ai.pleos.playground.sample.vehicle.location.LocationReader
 import ai.pleos.playground.sample.vehicle.location.LocationStatus
 import ai.pleos.playground.sample.vehicle.location.isLocationSupported
+import ai.pleos.playground.sample.vehicle.record.AccidentRecord
+import ai.pleos.playground.sample.vehicle.record.RecordStore
+import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.settings.ConsentStore
@@ -47,7 +50,9 @@ import java.util.Locale
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleReader
 import ai.pleos.playground.sample.vehicle.vehicle.VehicleSnapshot
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -75,7 +80,9 @@ class MainViewModel(application: Application) :
     private var readJob: Job? = null
     private var preCheckJob: Job? = null
     private var locationJob: Job? = null
+    private var saveJob: Job? = null
     private val consentStore = ConsentStore(application)
+    private val recordStore = RecordStore(application)
     // TextToSpeech는 음성 스위치를 켜고 [소리로 듣기]를 처음 누를 때 만들어진다(여기서는 SDK를 부르지 않는다).
     private val speechPlayer by lazy {
         SpeechPlayer(getApplication()) { state -> _uiState.update { it.copy(speechState = state) } }
@@ -371,9 +378,61 @@ class MainViewModel(application: Application) :
     fun endAccidentSession() {
         readJob?.cancel()
         locationJob?.cancel()
+        saveJob?.cancel()
         _uiState.update {
-            if (it.accidentSession == null && !it.isReadingVehicle) it
-            else it.copy(accidentSession = null, isReadingVehicle = false)
+            if (it.accidentSession == null && !it.isReadingVehicle && it.saveState == SaveState.IDLE) it
+            else it.copy(accidentSession = null, isReadingVehicle = false, saveState = SaveState.IDLE)
+        }
+    }
+
+    /**
+     * SC-270 [기록 저장]: 사용자가 누를 때만 현재 세션에서 기록 패키지(사고 시각, 위치·주소, 차량 상태, 안내 이행)를 만들어
+     * 앱 내부 저장소에 한 건 저장한다. 실패해도 앱은 계속되고 [SaveState.FAILED]로 알린다. 기록 내용은 로그에 남기지 않는다.
+     */
+    fun saveRecord() {
+        val state = _uiState.value
+        val session = state.accidentSession ?: return
+        if (state.saveState == SaveState.SAVING || state.saveState == SaveState.SAVED) return
+        _uiState.update { it.copy(saveState = SaveState.SAVING) }
+        saveJob = viewModelScope.launch {
+            val saved = try {
+                withContext(Dispatchers.IO) { recordStore.save(AccidentRecord.from(session)) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            }
+            Log.i(TAG, "SC-270 save: ${if (saved) "OK" else "FAILED"}")
+            _uiState.update {
+                it.copy(
+                    saveState = if (saved) SaveState.SAVED else SaveState.FAILED,
+                    hasSavedRecord = it.hasSavedRecord || saved
+                )
+            }
+        }
+    }
+
+    /** SC-270을 떠날 때(이전, 홈): 저장 진행 상태를 처음으로 돌린다. 이미 저장된 파일은 그대로 둔다. */
+    fun resetSaveState() {
+        if (_uiState.value.saveState == SaveState.IDLE) return
+        saveJob?.cancel()
+        _uiState.update { it.copy(saveState = SaveState.IDLE) }
+    }
+
+    /** 저장된 기록이 있는지 다시 확인한다(SC-270에 들어올 때, 개발자 도구를 열 때). */
+    fun refreshSavedRecord() {
+        viewModelScope.launch {
+            val exists = withContext(Dispatchers.IO) { recordStore.exists() }
+            _uiState.update { it.copy(hasSavedRecord = exists) }
+        }
+    }
+
+    /** 디버그 빌드의 [저장 기록 삭제]: 저장된 사고 기록 파일을 지운다(릴리스에는 이 진입점이 없다). */
+    fun deleteSavedRecord() {
+        viewModelScope.launch {
+            val deleted = withContext(Dispatchers.IO) { recordStore.delete() }
+            Log.i(TAG, "dev delete saved record: ${if (deleted) "OK" else "FAILED"}")
+            _uiState.update { it.copy(hasSavedRecord = if (deleted) false else recordStore.exists()) }
         }
     }
 

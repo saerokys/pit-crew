@@ -68,6 +68,9 @@ object PitCrewDimens {
     val switchWidth = 136.dp
     val switchHeight = 76.dp
     val switchKnob = 60.dp
+    // SC-270 시안에서 읽은 값
+    val endingButtonHeight = 200.dp
+    val endingTitleIcon = 96.dp
 }
 
 object PitCrewShapes {

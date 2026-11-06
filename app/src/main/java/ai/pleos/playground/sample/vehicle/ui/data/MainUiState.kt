@@ -6,6 +6,7 @@ import ai.pleos.playground.sample.vehicle.explorer.ApiFeatureDescriptor
 import ai.pleos.playground.sample.vehicle.explorer.ApiNumericRange
 import ai.pleos.playground.sample.vehicle.explorer.ApiOperation
 import ai.pleos.playground.sample.vehicle.explorer.VehicleDomain
+import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.tts.SpeechState
@@ -52,6 +53,10 @@ data class MainUiState(
     /** SC-400이 보여 주는 지원 확인 시각(SC-000 또는 [다시 확인]). */
     val linkCheckedAtMillis: Long? = null,
     val isCheckingLink: Boolean = false,
+    /** SC-270 [기록 저장] 진행 상태. */
+    val saveState: SaveState = SaveState.IDLE,
+    /** 저장된 기록이 있는지(SC-270의 "바뀌어요" 안내와 개발자 도구 표시용). 기록 내용은 들고 있지 않다. */
+    val hasSavedRecord: Boolean = false,
     val isSubscribed: Boolean = false,
     val subscribedFeatureId: String? = null,
     val capabilityAccess: String? = null,

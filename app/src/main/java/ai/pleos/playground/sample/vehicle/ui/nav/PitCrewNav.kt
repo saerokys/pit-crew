@@ -20,6 +20,8 @@ import ai.pleos.playground.sample.vehicle.ui.components.PitCrewTopBar
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentScreen
+import ai.pleos.playground.sample.vehicle.ui.ending.EndingScreen
+import ai.pleos.playground.sample.vehicle.record.SaveState
 import ai.pleos.playground.sample.vehicle.ui.home.HomeScreen
 import ai.pleos.playground.sample.vehicle.ui.precheck.PreDepartureScreen
 import ai.pleos.playground.sample.vehicle.ui.status.LinkStatusScreen
@@ -67,7 +69,7 @@ enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?)
     OTHER_PARTY("SC-240", "상대방 정보 확인", 5),
     VEHICLE_STATE("SC-250", "차량 상태 기록", 6),
     SUMMARY("SC-260", "접수 요약", 7),
-    ENDING("SC-270", "종료와 기록 처리", null),
+    ENDING("SC-270", "종료와 기록 처리", 7),
     PRE_DEPARTURE("SC-300", "출발 전 점검", null),
     VEHICLE_LINK("SC-400", "차량 연동 상태", null),
     SETTINGS("SC-500", "설정·정보", null)
@@ -116,6 +118,11 @@ fun PitCrewNavHost(
     onSetChecked: (String, Boolean) -> Unit,
     onSetInjury: (InjuryAnswer) -> Unit,
     onEndSession: () -> Unit,
+    saveState: SaveState,
+    hasSavedRecord: Boolean,
+    onSaveRecord: () -> Unit,
+    onResetSaveState: () -> Unit,
+    onRefreshSavedRecord: () -> Unit,
     isReadingVehicle: Boolean,
     onReadVehicle: () -> Unit,
     preCheckSnapshot: VehicleSnapshot?,
@@ -148,6 +155,11 @@ fun PitCrewNavHost(
     LaunchedEffect(route) {
         onStopSpeech()
         if (route == PitCrewRoute.HOME) onReleaseSpeech()
+    }
+
+    // SC-270에 들어오면 저장된 기록이 있는지 확인하고(덮어쓰기 안내용), 떠나면 저장 진행 상태를 처음으로 돌린다.
+    LaunchedEffect(route) {
+        if (route == PitCrewRoute.ENDING) onRefreshSavedRecord() else onResetSaveState()
     }
 
     // 홈에 도착하면(나가기, 아직이에요, 마치기, 이전) 사고 모드 세션 데이터를 버린다.
@@ -249,6 +261,14 @@ fun PitCrewNavHost(
                     onReread = onReadVehicle
                 )
                 PitCrewRoute.SUMMARY -> SummaryScreen(session = session)
+                PitCrewRoute.ENDING -> EndingScreen(
+                    session = session,
+                    saveState = saveState,
+                    hasSavedRecord = hasSavedRecord,
+                    onSave = onSaveRecord,
+                    onDiscardAndExit = { navigator.replaceWithHome() },
+                    onHome = { navigator.replaceWithHome() }
+                )
                 PitCrewRoute.PRE_DEPARTURE -> PreDepartureScreen(
                     snapshot = preCheckSnapshot,
                     isChecking = isPreChecking,
@@ -265,9 +285,7 @@ fun PitCrewNavHost(
                 )
                 else -> PlaceholderScreen(
                     route,
-                    onHome = { navigator.replaceWithHome() },
-                    // SC-270 자리표시에서만 [이전]을 둔다(Phase 10에서 실제 화면으로 바꾼다).
-                    onBack = if (route == PitCrewRoute.ENDING) ({ navigator.pop() }) else null
+                    onHome = { navigator.replaceWithHome() }
                 )
             }
         }
@@ -293,6 +311,12 @@ fun PitCrewNavHost(
                     onConfirmConsent(consentChoice.location, consentChoice.voice, consentChoice.network)
                     navigator.replaceTop(PitCrewRoute.STOP_CHECK)
                 }
+            )
+        } else if (route == PitCrewRoute.ENDING) {
+            // SC-270: 저장하기 전에는 [이전]만(저장은 화면 안 큰 버튼). 저장한 뒤에는 [홈으로]만 화면 안에 있어 하단 바에는 버튼이 없다.
+            PitCrewBottomBar(
+                onPrevious = if (saveState == SaveState.SAVED) null else ({ goBack() }),
+                onNext = null
             )
         } else if (route.step != null) {
             PitCrewBottomBar(
@@ -357,7 +381,7 @@ private fun SessionDialogs(
 
 /** 실제 화면이 아직 없는 route의 자리표시 화면. 흐름 밖 화면은 [홈으로]로 돌아간다. */
 @Composable
-private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit, onBack: (() -> Unit)? = null) {
+private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -375,9 +399,6 @@ private fun PlaceholderScreen(route: PitCrewRoute, onHome: () -> Unit, onBack: (
             )
             if (route.step == null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(PitCrewDimens.touchGap)) {
-                    if (onBack != null) {
-                        PitCrewButton(text = "이전", onClick = onBack, modifier = Modifier.width(PitCrewDimens.prevButtonWidth))
-                    }
                     PitCrewButton(text = "홈으로", onClick = onHome, modifier = Modifier.width(PitCrewDimens.prevButtonWidth))
                 }
             }
