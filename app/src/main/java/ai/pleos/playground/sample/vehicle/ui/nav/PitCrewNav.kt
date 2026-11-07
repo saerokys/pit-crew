@@ -130,7 +130,6 @@ class PitCrewNavigator(start: PitCrewRoute) {
 
 /**
  * 앱의 Pit Crew 화면 흐름: SC-000 -> SC-100 홈 -> (사고 모드 틀 | 자리표시 화면).
- * [topBarTrailing]은 상단 바 오른쪽 칸이다(디버그 빌드의 개발자 도구 버튼).
  * 홈에서 뒤로 가면 앱이 종료되는 시스템 기본 동작을 그대로 쓴다.
  */
 @Composable
@@ -191,8 +190,7 @@ fun PitCrewNavHost(
     linkCheckedAtMillis: Long?,
     isCheckingLink: Boolean,
     onRecheckLink: () -> Unit,
-    modifier: Modifier = Modifier,
-    topBarTrailing: (@Composable () -> Unit)? = null
+    modifier: Modifier = Modifier
 ) {
     val navigator = remember { PitCrewNavigator(if (startupDone) PitCrewRoute.HOME else PitCrewRoute.STARTUP) }
     LaunchedEffect(startupDone) {
@@ -255,7 +253,7 @@ fun PitCrewNavHost(
         val step = route.step
         val speechText = if (route in SpeechTexts.speechRoutes) SpeechTexts.forRoute(route, session) else null
         val trailing: (@Composable () -> Unit)? = when {
-            showSubtitle -> topBarTrailing // 개발자 도구 버튼(디버그 빌드, 홈에서만)
+            showSubtitle -> null // 홈과 시작 화면은 상단 바 오른쪽 칸이 비어 있다
             speechText != null -> {
                 // [소리로 듣기]는 SC-210, 220, 221, 230, 240에서만 보인다(그 밖의 화면에서는 숨긴다).
                 { SpeechButton(state = speechState, voiceOn = consent.voice, onClick = { onToggleSpeech(speechText) }) }

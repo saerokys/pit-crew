@@ -31,7 +31,6 @@ class MainActivity : ComponentActivity() {
             VehicleSampleAppTheme {
                 SampleApp(
                     uiState = uiState,
-                    onShowDevPage = viewModel::showDevPage,
                     onStartSession = viewModel::startAccidentSession,
                     onSetChecked = viewModel::setChecked,
                     onSetInjury = viewModel::setInjuryAnswer,
@@ -46,7 +45,6 @@ class MainActivity : ComponentActivity() {
                     onRecheckLink = viewModel::recheckVehicleLink,
                     onConfirmConsent = viewModel::confirmConsent,
                     onUpdateConsent = viewModel::updateConsent,
-                    onResetConsent = viewModel::resetConsent,
                     onToggleSpeech = viewModel::toggleSpeech,
                     onStopSpeech = viewModel::stopSpeech,
                     onReleaseSpeech = { viewModel.releaseSpeech() },
@@ -60,17 +58,7 @@ class MainActivity : ComponentActivity() {
                     onStartVoice = viewModel::startVoiceMemo,
                     onStopVoice = viewModel::stopVoiceMemo,
                     onSaveVoice = viewModel::confirmVoiceMemo,
-                    onReleaseVoice = { viewModel.releaseVoice() },
-                    onShowHome = viewModel::showHome,
-                    onOpenDomain = viewModel::showApiExplorer,
-                    onSelectFeature = viewModel::selectFeature,
-                    onSearchFeatures = viewModel::searchFeatures,
-                    onRunCapability = viewModel::runFeatureCapability,
-                    onRunRead = viewModel::runFeatureRead,
-                    onStartUpdates = viewModel::startFeatureUpdates,
-                    onStopUpdates = viewModel::stopFeatureUpdates,
-                    onBackToFeatureList = viewModel::backToFeatureList,
-                    onDismissError = viewModel::dismissError
+                    onReleaseVoice = { viewModel.releaseVoice() }
                 )
             }
         }

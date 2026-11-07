@@ -48,14 +48,6 @@ class ConsentStore(context: Context) {
         }
     }
 
-    /** 디버그 빌드의 [동의 초기화]용. 동의 설정만 지우고 권한은 건드리지 않는다. */
-    fun clear() {
-        try {
-            prefs.edit().clear().apply()
-        } catch (e: Exception) {
-        }
-    }
-
     private companion object {
         const val FILE = "pitcrew_consent"
         const val KEY_LOCATION = "location"
