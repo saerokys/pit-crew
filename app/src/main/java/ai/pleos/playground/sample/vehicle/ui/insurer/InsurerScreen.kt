@@ -218,12 +218,7 @@ fun InsurerScreen(
                 Text(InsurerTexts.NO_NETWORK, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
             }
         }
-        Spacer(Modifier.height(12.dp))
-        Row(modifier = Modifier.fillMaxWidth().height(PitCrewDimens.iconSize + 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(PitCrewIcons.Info, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(PitCrewDimens.iconSize))
-            Spacer(Modifier.width(16.dp))
-            Text(InsurerTexts.DISCLAIMER, style = PitCrewTheme.typography.caption, color = colors.textSecondary)
-        }
+        // "참고용 기록…" 문구는 하단 바 가운데로 옮겼다(PitCrewNav, SC-280과 같은 방식).
     }
 }
 

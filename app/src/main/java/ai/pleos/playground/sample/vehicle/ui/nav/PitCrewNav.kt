@@ -29,6 +29,7 @@ import ai.pleos.playground.sample.vehicle.ui.destination.DestinationScreen
 import ai.pleos.playground.sample.vehicle.ui.destination.DestinationTexts
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerScreen
+import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerTexts
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentChoice
 import ai.pleos.playground.sample.vehicle.ui.consent.ConsentScreen
 import ai.pleos.playground.sample.vehicle.ui.ending.EndingScreen
@@ -387,7 +388,10 @@ fun PitCrewNavHost(
             PitCrewBottomBar(
                 onPrevious = { goBack() },
                 onNext = { navigator.push(PitCrewRoute.ENDING) },
-                nextFilled = !session?.insurerReceipts.isNullOrEmpty()
+                nextFilled = !session?.insurerReceipts.isNullOrEmpty(),
+                // 화면 안 세로 공간을 확보하려고 "참고용 기록…" 문구를 아래쪽에서 하단 바 가운데로 옮김
+                centerText = InsurerTexts.DISCLAIMER,
+                centerIcon = PitCrewIcons.Info
             )
         } else if (route == PitCrewRoute.DESTINATION) {
             // SC-280: [이전](SC-270)만. 저장하지 않은 채 홈으로 가 버리지 않게 [홈으로]를 두지 않는다. 채운 버튼은 [길안내 시작] 하나뿐이다.

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
  * 미체크: surface 배경, divider 테두리의 빈 체크박스.
  * 체크: accent 테두리, accent로 채운 체크박스와 체크 표시.
  * [dense]는 항목이 6개인 SC-290용: 행 최소 높이 96(터치 영역 최소), 글자 36 Bold.
+ * [dense]이면서 [note]가 있으면 위아래 여백을 4로 줄여 행 높이가 96이 되게 한다.
  * [enabled]가 거짓이면 고를 수 없는 항목(회색 글자, 체크 불가)이고 [note]에 이유를 보여 준다.
  */
 @Composable
@@ -59,7 +60,8 @@ fun CheckItem(
             .background(colors.surface, PitCrewShapes.card)
             .border(BorderStroke(PitCrewDimens.cardBorder, line), PitCrewShapes.card)
             .toggleable(enabled = enabled, value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
-            .padding(horizontal = 32.dp, vertical = if (dense) 16.dp else if (compact) 24.dp else 40.dp),
+            // dense에 note(고를 수 없는 이유)가 붙으면 두 줄이 되므로 위아래 여백을 4로 줄여 행 높이를 96으로 맞춘다.
+            .padding(horizontal = 32.dp, vertical = if (dense) (if (note != null) 4.dp else 16.dp) else if (compact) 24.dp else 40.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
