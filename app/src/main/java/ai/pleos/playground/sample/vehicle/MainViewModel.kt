@@ -166,6 +166,22 @@ class MainViewModel(application: Application) :
         _uiState.update { it.copy(consent = consent) }
     }
 
+    /**
+     * SC-500 스위치: 바꾼 값을 바로 저장한다. 처음 정하는 경우에도 "정했음"으로 보아 SC-205를 건너뛰고,
+     * 건드리지 않은 스위치는 지금 값(처음이면 꺼짐) 그대로다. 음성을 끄면 쓰던 TTS·STT SDK를 해제한다.
+     */
+    fun updateConsent(location: Boolean, voice: Boolean, network: Boolean) {
+        val before = _uiState.value.consent
+        val consent = Consent(location = location, voice = voice, network = network, decided = true)
+        consentStore.save(consent)
+        _uiState.update { it.copy(consent = consent) }
+        if (before.voice && !voice) {
+            releaseSpeech(forgetUnavailable = true)
+            releaseVoice(forgetUnavailable = true)
+        }
+        Log.i(TAG, "SC-500 consent saved: location=$location voice=$voice network=$network")
+    }
+
     /** 디버그 빌드의 [동의 초기화]: 저장된 동의 설정만 지운다(위치 권한은 건드리지 않는다). */
     fun resetConsent() {
         consentStore.clear()

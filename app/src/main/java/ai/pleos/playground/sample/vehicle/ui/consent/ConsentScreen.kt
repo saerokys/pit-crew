@@ -73,7 +73,7 @@ fun ConsentScreen(
             )
     ) {
         Text("사용할 기능을 골라 주세요", style = PitCrewTheme.typography.screenTitle, color = colors.textPrimary)
-        Text("필요한 것만 켜세요.", style = PitCrewTheme.typography.body, color = colors.textSecondary)
+        Text("필요한 것만 켜세요. 언제든 끌 수 있어요.", style = PitCrewTheme.typography.body, color = colors.textSecondary)
         Spacer(Modifier.height(PitCrewDimens.touchGap))
         Column(verticalArrangement = Arrangement.spacedBy(PitCrewDimens.touchGap)) {
             PitCrewSwitchRow(

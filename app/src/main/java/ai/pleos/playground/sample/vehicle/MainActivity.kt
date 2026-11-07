@@ -45,6 +45,7 @@ class MainActivity : ComponentActivity() {
                     onCheckPreDeparture = viewModel::checkPreDeparture,
                     onRecheckLink = viewModel::recheckVehicleLink,
                     onConfirmConsent = viewModel::confirmConsent,
+                    onUpdateConsent = viewModel::updateConsent,
                     onResetConsent = viewModel::resetConsent,
                     onToggleSpeech = viewModel::toggleSpeech,
                     onStopSpeech = viewModel::stopSpeech,
