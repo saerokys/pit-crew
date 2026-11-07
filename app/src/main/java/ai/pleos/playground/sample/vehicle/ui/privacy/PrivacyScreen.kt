@@ -41,6 +41,7 @@ object PrivacyTexts {
     const val DELETE = "언제든 삭제 가능"
     const val SOURCES_TITLE = "출처와 안내"
     const val WEATHER_LICENSE = "CC BY 4.0"
+    const val OSM_LICENSE = "ODbL 1.0 라이선스"
     const val WEATHER_LOG = "날씨를 조회하면 서버 로그에 좌표가 최대 90일 남을 수 있어요"
     const val DEMO_INSURER = "시연용 가상 보험사예요. 실제 보험사로 전달되지 않아요"
 
@@ -50,7 +51,7 @@ object PrivacyTexts {
     /** 화면에 나오는 문구 전체(검토와 단위 테스트용). */
     val ALL: List<String> = listOf(
         TITLE, NOT_COLLECTED, NOT_COLLECTED_NOTE, EXTERNAL, KEEP, DELETE, SOURCES_TITLE,
-        WEATHER_CREDIT, WEATHER_LICENSE, WEATHER_LOG, OSM_CREDIT, DEMO_INSURER, DISCLAIMER
+        WEATHER_CREDIT, WEATHER_LICENSE, WEATHER_LOG, OSM_CREDIT, OSM_LICENSE, DEMO_INSURER, DISCLAIMER
     )
 }
 
@@ -90,7 +91,7 @@ fun PrivacyScreen(modifier: Modifier = Modifier) {
                 )
                 PrivacyLine(PitCrewIcons.Sun, WEATHER_CREDIT, note = PrivacyTexts.WEATHER_LICENSE)
                 PrivacyLine(PitCrewIcons.Info, PrivacyTexts.WEATHER_LOG)
-                PrivacyLine(PitCrewIcons.Pin, OSM_CREDIT)
+                PrivacyLine(PitCrewIcons.Pin, OSM_CREDIT, note = PrivacyTexts.OSM_LICENSE)
                 PrivacyLine(PitCrewIcons.Building, PrivacyTexts.DEMO_INSURER)
             }
         }

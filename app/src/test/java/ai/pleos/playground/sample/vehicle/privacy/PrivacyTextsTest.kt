@@ -18,6 +18,8 @@ class PrivacyTextsTest {
         assertTrue(PrivacyTexts.ALL.contains(WEATHER_CREDIT))
         assertTrue(PrivacyTexts.ALL.contains(OSM_CREDIT))
         assertEquals("CC BY 4.0", PrivacyTexts.WEATHER_LICENSE)
+        assertEquals("ODbL 1.0 라이선스", PrivacyTexts.OSM_LICENSE)
+        assertTrue(PrivacyTexts.ALL.contains(PrivacyTexts.OSM_LICENSE))
     }
 
     @Test
