@@ -56,6 +56,7 @@ object SettingsTexts {
     const val SERVICE_LABEL = "Vehicle Service"
     const val UNKNOWN = "확인 불가"
     const val OPEN_RECORDS = "저장 기록 삭제"
+    const val OPEN_PRIVACY = "개인정보 처리 원칙"
     const val PERMISSION_DENIED = "위치 권한을 허용하지 않았어요"
     const val PERMISSION_GUIDE = "시스템 설정에서 허용해 주세요"
     const val NETWORK_NOTICE = "켜면 사고 위치를 주소·날씨 조회 서버로 보내요"
@@ -94,6 +95,7 @@ fun SettingsScreen(
     serviceVersion: String,
     onConsentChange: (location: Boolean, voice: Boolean, network: Boolean) -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenPrivacy: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = PitCrewTheme.colors
@@ -222,11 +224,18 @@ fun SettingsScreen(
             }
         }
         Spacer(Modifier.height(PitCrewDimens.touchGap))
-        PitCrewButton(
-            text = SettingsTexts.OPEN_RECORDS,
-            onClick = onOpenRecords,
-            modifier = Modifier.width(PitCrewDimens.recheckButtonWidth).height(PitCrewDimens.touchMin)
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(PitCrewDimens.touchGap)) {
+            PitCrewButton(
+                text = SettingsTexts.OPEN_PRIVACY,
+                onClick = onOpenPrivacy,
+                modifier = Modifier.width(PitCrewDimens.recheckButtonWidth).height(PitCrewDimens.touchMin)
+            )
+            PitCrewButton(
+                text = SettingsTexts.OPEN_RECORDS,
+                onClick = onOpenRecords,
+                modifier = Modifier.width(PitCrewDimens.recheckButtonWidth).height(PitCrewDimens.touchMin)
+            )
+        }
     }
 }
 

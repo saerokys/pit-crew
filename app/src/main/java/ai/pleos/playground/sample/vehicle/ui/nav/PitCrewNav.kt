@@ -33,6 +33,8 @@ import ai.pleos.playground.sample.vehicle.ui.insurer.InsurerTexts
 import ai.pleos.playground.sample.vehicle.record.SavedRecordUi
 import ai.pleos.playground.sample.vehicle.BuildConfig
 import ai.pleos.playground.sample.vehicle.ui.data.RuntimeVersions
+import ai.pleos.playground.sample.vehicle.ui.privacy.PrivacyScreen
+import ai.pleos.playground.sample.vehicle.ui.privacy.PrivacyTexts
 import ai.pleos.playground.sample.vehicle.ui.settings.SettingsScreen
 import ai.pleos.playground.sample.vehicle.ui.records.SavedRecordScreen
 import ai.pleos.playground.sample.vehicle.ui.records.SavedRecordTexts
@@ -93,7 +95,8 @@ enum class PitCrewRoute(val screenId: String, val title: String, val step: Int?)
     PRE_DEPARTURE("SC-300", "출발 전 점검", null),
     VEHICLE_LINK("SC-400", "차량 연동 상태", null),
     SETTINGS("SC-500", "설정·정보", null),
-    SAVED_RECORD("SC-520", "저장 기록", null)
+    SAVED_RECORD("SC-520", "저장 기록", null),
+    PRIVACY("SC-510", "개인정보 처리 원칙", null)
 }
 
 /** 틀 확인용 직선 순서. SC-221 분기(부상 있어요/모르겠어요)는 Phase 3에서 만든다. */
@@ -384,8 +387,10 @@ fun PitCrewNavHost(
                     sdkVersion = runtimeVersions.sdkVersion,
                     serviceVersion = runtimeVersions.vehicleServiceVersion,
                     onConsentChange = onUpdateConsent,
-                    onOpenRecords = { navigator.push(PitCrewRoute.SAVED_RECORD) }
+                    onOpenRecords = { navigator.push(PitCrewRoute.SAVED_RECORD) },
+                    onOpenPrivacy = { navigator.push(PitCrewRoute.PRIVACY) }
                 )
+                PitCrewRoute.PRIVACY -> PrivacyScreen()
                 else -> PlaceholderScreen(
                     route,
                     onHome = { navigator.replaceWithHome() }
@@ -428,6 +433,14 @@ fun PitCrewNavHost(
         } else if (route == PitCrewRoute.SETTINGS) {
             // SC-500: [이전]만(홈으로). 이동 버튼은 화면 안 [저장 기록 삭제] 하나다.
             PitCrewBottomBar(onPrevious = { goBack() }, onNext = null)
+        } else if (route == PitCrewRoute.PRIVACY) {
+            // SC-510: [이전]만(SC-500으로). "참고용" 문구는 하단 바 가운데에 둔다.
+            PitCrewBottomBar(
+                onPrevious = { goBack() },
+                onNext = null,
+                centerText = PrivacyTexts.DISCLAIMER,
+                centerIcon = PitCrewIcons.Info
+            )
         } else if (route == PitCrewRoute.SAVED_RECORD) {
             // SC-520: [이전]만(SC-500으로). 삭제는 화면 안 기본 버튼이다. "참고용" 문구는 하단 바 가운데에 둔다.
             PitCrewBottomBar(
