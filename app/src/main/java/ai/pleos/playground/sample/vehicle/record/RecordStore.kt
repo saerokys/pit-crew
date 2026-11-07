@@ -9,6 +9,13 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
+/** [RecordStore.load]의 결과. */
+sealed interface RecordLoad {
+    data object None : RecordLoad
+    data class Found(val record: Map<String, Any?>) : RecordLoad
+    data object Unreadable : RecordLoad
+}
+
 /** SC-270 [기록 저장]의 진행 상태. 누르기 전에는 IDLE이고, 화면을 떠나면 다시 IDLE로 돌아간다. */
 enum class SaveState { IDLE, SAVING, SAVED, FAILED }
 
@@ -48,7 +55,23 @@ class RecordStore(context: Context) {
         }
     }
 
-    /** 저장된 기록을 지운다(디버그 [개발자 도구]의 "저장 기록 삭제"). 기록이 없어도 true. */
+    /**
+     * 저장된 기록을 읽는다(SC-520). 파일이 없으면 [RecordLoad.None], 읽거나 해석하지 못하면 [RecordLoad.Unreadable].
+     * 기록 내용은 로그에 남기지 않는다.
+     */
+    fun load(): RecordLoad = try {
+        if (!file.isFile) {
+            RecordLoad.None
+        } else {
+            val parsed = fromJson(JSONObject(String(file.readBytes(), StandardCharsets.UTF_8)))
+            @Suppress("UNCHECKED_CAST")
+            RecordLoad.Found(parsed as Map<String, Any?>)
+        }
+    } catch (e: Exception) {
+        RecordLoad.Unreadable
+    }
+
+    /** 저장된 기록을 지운다(SC-520 [삭제], 디버그 [개발자 도구]). 기록이 없어도 true. */
     fun delete(): Boolean = try {
         (!file.exists() || file.delete()).also { try { tempFile.delete() } catch (_: Exception) { } }
     } catch (e: Exception) {
@@ -60,6 +83,16 @@ class RecordStore(context: Context) {
         is Map<*, *> -> JSONObject().also { json -> value.forEach { (k, v) -> json.put(k.toString(), toJson(v)) } }
         is List<*> -> JSONArray().also { array -> value.forEach { array.put(toJson(it)) } }
         else -> value // 문자열, 숫자, 불리언
+    }
+
+    /** [toJson]의 반대: JSONObject → Map, JSONArray → List, JSON null → null. */
+    private fun fromJson(value: Any?): Any? = when (value) {
+        null, JSONObject.NULL -> null
+        is JSONObject -> LinkedHashMap<String, Any?>().also { map ->
+            value.keys().forEach { key -> map[key] = fromJson(value.get(key)) }
+        }
+        is JSONArray -> (0 until value.length()).map { fromJson(value.get(it)) }
+        else -> value
     }
 
     private companion object {

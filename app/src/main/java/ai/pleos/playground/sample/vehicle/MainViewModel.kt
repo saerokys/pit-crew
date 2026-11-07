@@ -32,8 +32,11 @@ import ai.pleos.playground.sample.vehicle.navi.RouteResult
 import ai.pleos.playground.sample.vehicle.insurer.InsurerPackage
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.AccidentRecord
+import ai.pleos.playground.sample.vehicle.record.RecordLoad
 import ai.pleos.playground.sample.vehicle.record.RecordStore
 import ai.pleos.playground.sample.vehicle.record.SaveState
+import ai.pleos.playground.sample.vehicle.record.SavedRecordSummary
+import ai.pleos.playground.sample.vehicle.record.SavedRecordUi
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.settings.ConsentStore
@@ -711,12 +714,34 @@ class MainViewModel(application: Application) :
         }
     }
 
-    /** 디버그 빌드의 [저장 기록 삭제]: 저장된 사고 기록 파일을 지운다(릴리스에는 이 진입점이 없다). */
+    /** SC-520에 들어올 때 저장된 기록을 읽어 요약을 만든다(읽지 못하면 Unreadable). 기록 내용은 로그에 남기지 않는다. */
+    fun loadSavedRecord() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(savedRecord = SavedRecordUi.Loading, deleteFailed = false) }
+            val loaded = withContext(Dispatchers.IO) { recordStore.load() }
+            val ui = when (loaded) {
+                RecordLoad.None -> SavedRecordUi.None
+                RecordLoad.Unreadable -> SavedRecordUi.Unreadable
+                is RecordLoad.Found -> SavedRecordSummary.from(loaded.record)?.let { SavedRecordUi.Found(it) }
+                    ?: SavedRecordUi.Unreadable
+            }
+            Log.i(TAG, "SC-520 load: ${ui::class.simpleName}")
+            _uiState.update { it.copy(savedRecord = ui, hasSavedRecord = ui != SavedRecordUi.None) }
+        }
+    }
+
+    /** SC-520 [삭제](확인 대화상자 뒤)와 디버그 [개발자 도구]의 [저장 기록 삭제]: 저장된 사고 기록 파일을 지운다. */
     fun deleteSavedRecord() {
         viewModelScope.launch {
             val deleted = withContext(Dispatchers.IO) { recordStore.delete() }
-            Log.i(TAG, "dev delete saved record: ${if (deleted) "OK" else "FAILED"}")
-            _uiState.update { it.copy(hasSavedRecord = if (deleted) false else recordStore.exists()) }
+            Log.i(TAG, "saved record delete: ${if (deleted) "OK" else "FAILED"}")
+            _uiState.update {
+                it.copy(
+                    hasSavedRecord = if (deleted) false else recordStore.exists(),
+                    savedRecord = if (deleted) SavedRecordUi.None else it.savedRecord,
+                    deleteFailed = !deleted
+                )
+            }
         }
     }
 

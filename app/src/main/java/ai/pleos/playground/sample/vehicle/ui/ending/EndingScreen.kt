@@ -26,8 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** 안내 문구(SPEC·시안의 "언제든 삭제할 수 있어요"는 SC-520이 생기는 Phase 14에서 복원한다. PROGRESS 4-1 참고). */
-private const val KEEP_NOTICE = "저장하면 이 기기에만 보관돼요."
+/** 안내 문구(SPEC·시안 원문). SC-520(홈 → 설정·정보 → 저장 기록 삭제)에서 언제든 삭제할 수 있다. */
+private const val KEEP_NOTICE = "저장하면 이 기기에만 보관되고 언제든 삭제할 수 있어요"
 private const val SAVED_TEXT = "저장했어요"
 private const val FAILED_TEXT = "저장하지 못했어요"
 private const val OVERWRITE_TEXT = "이전에 저장한 기록은 바뀌어요"

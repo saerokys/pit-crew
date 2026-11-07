@@ -13,6 +13,7 @@ import ai.pleos.playground.sample.vehicle.navi.NaviState
 import ai.pleos.playground.sample.vehicle.navi.RouteResult
 import ai.pleos.playground.sample.vehicle.insurer.InsurerSendState
 import ai.pleos.playground.sample.vehicle.record.SaveState
+import ai.pleos.playground.sample.vehicle.record.SavedRecordUi
 import ai.pleos.playground.sample.vehicle.session.AccidentSession
 import ai.pleos.playground.sample.vehicle.settings.Consent
 import ai.pleos.playground.sample.vehicle.stt.VoiceState
@@ -83,6 +84,10 @@ data class MainUiState(
     val saveState: SaveState = SaveState.IDLE,
     /** 저장된 기록이 있는지(SC-270의 "바뀌어요" 안내와 개발자 도구 표시용). 기록 내용은 들고 있지 않다. */
     val hasSavedRecord: Boolean = false,
+    /** SC-520이 보여 주는 저장 기록 요약(화면에 들어올 때 읽는다). 좌표·음성 메모 등은 기록에 없다. */
+    val savedRecord: SavedRecordUi = SavedRecordUi.Loading,
+    /** SC-520 [삭제]가 실패했는지("삭제하지 못했어요"). */
+    val deleteFailed: Boolean = false,
     val isSubscribed: Boolean = false,
     val subscribedFeatureId: String? = null,
     val capabilityAccess: String? = null,

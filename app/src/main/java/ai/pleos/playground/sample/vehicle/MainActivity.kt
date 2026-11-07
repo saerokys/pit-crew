@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
                     onResetSaveState = viewModel::resetSaveState,
                     onRefreshSavedRecord = viewModel::refreshSavedRecord,
                     onDeleteSavedRecord = viewModel::deleteSavedRecord,
+                    onLoadSavedRecord = viewModel::loadSavedRecord,
                     onReadVehicle = viewModel::readVehicleState,
                     onCheckPreDeparture = viewModel::checkPreDeparture,
                     onRecheckLink = viewModel::recheckVehicleLink,
