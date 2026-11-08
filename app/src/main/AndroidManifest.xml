@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Public read permissions (Vehicle Service protectionLevel="normal"). -->
-    <uses-permission android:name="pleos.car.permission.CAR_CLIMATE" />
-    <uses-permission android:name="pleos.car.permission.CAR_CONNECT_VENDOR_CONTROL" />
+    <!--
+        Vehicle read permissions (defined by the Vehicle Service, protectionLevel=normal).
+        Only the five that the app's read-only calls need (SDK @RequiresPermission of the
+        check*Capabilities / getCurrent* calls). No CONTROL_* permission is declared.
+        15 other vehicle permissions from the sample app were removed during submission prep (see docs/PROGRESS.md).
+    -->
+    <!-- Door Position (SC-000 capability, SC-250/300 read). -->
     <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
-    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
-    <uses-permission android:name="pleos.car.permission.CAR_ENERGY" />
-    <uses-permission android:name="pleos.car.permission.CAR_INFO" />
-    <uses-permission android:name="pleos.car.permission.CAR_LIGHTS" />
-    <uses-permission android:name="pleos.car.permission.CAR_MILEAGE" />
-    <uses-permission android:name="pleos.car.permission.CAR_MIRRORS" />
-    <uses-permission android:name="pleos.car.permission.CAR_POWERTRAIN" />
-    <uses-permission android:name="pleos.car.permission.CAR_SAFETY" />
-    <uses-permission android:name="pleos.car.permission.CAR_SEATS" />
-    <uses-permission android:name="pleos.car.permission.CAR_SPEED" />
-    <uses-permission android:name="pleos.car.permission.CAR_TOLL" />
-    <uses-permission android:name="pleos.car.permission.CAR_TIRES" />
+    <!-- Window Position. -->
     <uses-permission android:name="pleos.car.permission.CAR_WINDOWS" />
-
-    <!-- Additional read permissions. -->
-    <uses-permission android:name="pleos.car.permission.READ_CAR_DISPLAY_UNITS" />
-    <uses-permission android:name="pleos.car.permission.READ_CAR_STEERING" />
-    <uses-permission android:name="pleos.car.permission.READ_ADAS_STATES" />
-    <uses-permission android:name="pleos.car.permission.READ_WINDSHIELD_WIPERS" />
+    <!-- EV Battery state of charge. -->
+    <uses-permission android:name="pleos.car.permission.CAR_ENERGY" />
+    <!-- Distance Driven (odometer) read only. Vehicle speed and gear are not read. -->
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
+    <!-- Turn Signal state. -->
+    <uses-permission android:name="pleos.car.permission.CAR_LIGHTS" />
 
     <!-- General network permission (not a vehicle permission): reverse geocoding (Nominatim) when the user turns network on in SC-205. -->
     <uses-permission android:name="android.permission.INTERNET" />

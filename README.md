@@ -57,7 +57,7 @@
 
 ## 6. 지원하지 않는 항목
 
-- 차량 제어(set 호출, CONTROL_* 권한): 사용하지 않음. 차량 권한은 읽기 권한만 선언합니다. 그 밖에 선언한 권한은 내비게이션 서비스 권한(`pleos.car.permission.NAVI_ROUTE_SEARCH`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용, 길안내 요청용이며 `NAVI_ROUTE`는 선언하지 않음), 음성 안내 서비스 권한(`pleos.car.permission.TTS_SERVICE`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용), 음성 메모 서비스 권한(`pleos.car.permission.STT_SERVICE`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용), 위치 읽기(`pleos.car.permission.FUSED_LOCATION`, 사용자가 SC-205에서 켠 때 시스템 권한 창으로 허용)와 **차량 권한이 아닌 일반 네트워크 권한**(`android.permission.INTERNET`, 주소 조회용)입니다.
+- 차량 제어(set 호출, CONTROL_* 권한): 사용하지 않음. 선언한 차량 권한은 값을 읽는 데 필요한 5개뿐입니다: `CAR_DOORS`(문 위치), `CAR_WINDOWS`(창문 위치), `CAR_ENERGY`(EV 배터리 충전량), `CAR_DRIVE`(주행 거리 읽기에만 사용, 속도와 기어는 읽지 않음), `CAR_LIGHTS`(방향지시등). 공식 샘플 앱이 선언하던 나머지 차량 권한 15개는 이 앱이 쓰지 않아 지웠습니다. 그 밖에 선언한 권한은 내비게이션 서비스 권한(`pleos.car.permission.NAVI_ROUTE_SEARCH`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용, 길안내 요청용이며 `NAVI_ROUTE`는 선언하지 않음), 음성 안내 서비스 권한(`pleos.car.permission.TTS_SERVICE`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용), 음성 메모 서비스 권한(`pleos.car.permission.STT_SERVICE`, **차량 권한이 아닌 일반 권한**, 설치 때 자동 허용), 위치 읽기(`pleos.car.permission.FUSED_LOCATION`, 사용자가 SC-205에서 켠 때 시스템 권한 창으로 허용)와 **차량 권한이 아닌 일반 네트워크 권한**(`android.permission.INTERNET`, 주소 조회용)입니다.
 - 사고 자동 감지, 에어백 상태, 문 잠김, 차대번호(VIN), 비상등 자동 확인, 타이어 값
 - 법적 판단·과실 판단·의료 조언
 - 상대방 정보, 사진, 차대번호의 저장·전송

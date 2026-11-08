@@ -173,6 +173,7 @@
 - SC-205 부제에 "언제든 끌 수 있어요"를 추가하는 것은 SC-500(설정)에서 동의를 다시 바꿀 수 있게 된 뒤에 한다. **(완료: Phase 14 단계 2)**
 - 제출 준비: README의 `TODO` 채우기(APK 경로, GitHub 링크, 시연 영상), 릴리스 APK 빌드, 키·토큰·개인 이메일 포함 여부 점검, 지원하지 않는 항목 최종 확인, GitHub 커밋 이메일은 noreply 사용.
 - 제출 준비(추가): **릴리스 APK 서명 방식을 결정한다**(지금 `assembleRelease`는 서명 안 된 APK만 만든다). 서명 키(keystore)와 비밀번호는 저장소에 올리지 않는다.
+- 제출 준비(추가, 2026-11-08): **서명 전에 매니페스트 권한을 정리한다.** 차량 권한 20개 중 코드가 쓰는 5개(`CAR_DOORS`, `CAR_WINDOWS`, `CAR_ENERGY`, `CAR_DRIVE`, `CAR_LIGHTS`)만 남기고 15개를 지운다(사용자 결정, PROGRESS 4절·7절). 지운 뒤 에뮬레이터에서 UNSUPPORTED/UNKNOWN/`SecurityException`이 새로 나오면 해당 권한을 되살린다. 서명 방식은 직접 만든 키 + zipalign + apksigner, 최종본 `apk/개인_PitCrew_release.apk` 한 번만 커밋한다(PROGRESS 7절).
 - 저장소 최종 점검: 히스토리 포함 검색, 작성자 이메일, APK 문자열 검색, GitHub 설정 확인.
 
 ## 4. 범위 밖 (만들지 않음)
