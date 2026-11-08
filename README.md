@@ -6,7 +6,7 @@
 
 ## 1. 실행 방법
 
-**APK로 설치:** **(최종 제출 시 채움)**
+**APK로 설치:** 에뮬레이터를 켠 뒤 2절의 `adb install` 명령을 사용합니다(`apk/개인_PitCrew_release.apk`).
 
 **소스에서 실행:**
 1. Android Studio에서 이 폴더(`pit-crew`)를 엽니다.
@@ -16,11 +16,25 @@
 
 실차 시연은 지원되지 않아 에뮬레이터 기준으로 개발·검증했습니다.
 
-## 2. APK 위치
+## 2. APK 위치와 설치·서명
 
-- 제출용 APK: **(최종 제출 시 채움)**
-- `apk/` 폴더 안내: **(최종 제출 시 채움)**
-- 서명 절차: **(최종 제출 시 채움)** (서명 키 파일과 비밀번호는 저장소에 올리지 않습니다.)
+- 제출용 APK: [`apk/개인_PitCrew_release.apk`](apk/개인_PitCrew_release.apk) (서명된 release, 약 38.5MiB, versionName `1.0.0-sdk35`). SHA-256은 `docs/PROGRESS.md`에 기록했습니다.
+- `apk/` 폴더에는 제출용 APK 1개만 있습니다. 소스에서 다시 빌드했을 때 바이트 단위로 같은지는 확인하지 않았습니다.
+
+**설치 (Pleos Connect Emulator에서 실제로 동작한 명령):**
+```
+adb install -r --user 10 apk/개인_PitCrew_release.apk
+adb shell am start --user 10 -n ai.pleos.playground.sample.vehicle/.MainActivity
+```
+- 이 에뮬레이터의 앱은 Android 사용자 10(운전자)에서 실행되므로 `adb shell pm` 계열 명령에는 `--user 10`이 필요합니다. 설치 자체는 `--user` 없이 `adb install -r`로도 사용자 0과 10에 설치되는 것을 확인했습니다.
+- 같은 패키지의 debug 빌드(서명이 다름)가 있으면 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`로 실패합니다. 먼저 `adb uninstall --user 0 ai.pleos.playground.sample.vehicle`와 `--user 10`으로 지운 뒤 설치합니다(앱 데이터도 지워집니다).
+- 한글 파일명은 Windows PowerShell에서 설치에 성공했습니다. 다른 환경과 Pleos Connect Emulator 외의 기기는 확인 불가입니다.
+
+**서명 절차:** 직접 만든 키(자체 서명, 인증서 `CN=PitCrew`, RSA 3072)로 서명했습니다. **키 파일과 비밀번호는 저장소에 없습니다.** 다시 서명하려면(비밀값은 적지 않음):
+1. `./gradlew assembleRelease`로 서명 안 된 APK를 만듭니다(`build.gradle.kts`에는 서명 설정이 없습니다).
+2. `zipalign -f 4 app-release-unsigned.apk aligned.apk`
+3. `apksigner sign --ks <키 파일> --ks-key-alias <별칭> --v4-signing-enabled false --out signed.apk aligned.apk` (키 비밀번호는 프롬프트에 입력)
+4. `apksigner verify --print-certs signed.apk` (v3 서명 `Verifies` 확인)
 
 ## 3. 테스트 환경과 설정
 
