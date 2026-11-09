@@ -93,5 +93,5 @@ adb shell am start --user 10 -n ai.pleos.playground.sample.vehicle/.MainActivity
 
 ## 8. 링크
 
-- GitHub: **(최종 제출 시 채움)**
-- 시연 영상: **(최종 제출 시 채움)**
+- GitHub: https://github.com/saerokys/pit-crew
+- 시연 영상: https://drive.google.com/file/d/19z5x5814ighbx4QiJiAXYJ4E7Y0iodAT/view?usp=sharing
